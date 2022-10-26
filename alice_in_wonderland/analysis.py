@@ -18,13 +18,14 @@ alice_filtered = normalize(alice_text, stop_words)
 # create a dictionary with the word count
 alice_word_count = word_count(alice_filtered)
 
+#write it in a text file, for clarity. 
+with open("alice_text_processed.txt", "w") as temp:
+    for item in alice_word_count.items():
+        temp.write(f"{item[0] :15} {item[1]}\n")
+
 # analize word probability based on dict data
 alice_word_prob = word_probability(alice_word_count)
 
 # display histogram
 display_histogram(alice_word_count, ratio=1000)
 
-''' write it in a text file, for clarity. 
-with open("alice_text_processed.txt", "w") as temp:
-    temp.write(alice_text)
-'''
