@@ -1,4 +1,9 @@
 def process_element(matrix, i, j):
+    '''
+    given a position from a matrix (defined by the indexes i, j) 
+    it takes the elements around it and calculates the average value
+    '''
+    
     values = [matrix[i][j]]
     move = [-1,1]
 
@@ -13,6 +18,9 @@ def process_element(matrix, i, j):
     return sum(values)/len(values)
 
 def process_matrix(matrix):
+    '''
+    calculates the average value for all elements in a matrix
+    '''
     avg_matrix = []
 
     for i, row in enumerate(matrix): 
