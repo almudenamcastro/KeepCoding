@@ -1,8 +1,5 @@
 from re import I
-
-
 ALPHABET = list("abcdefghijklmnñopqrstuvwxyz")
-
 
 def cesar_v0(letter, n): 
     if n > len(ALPHABET):
@@ -14,7 +11,6 @@ def cesar_v0(letter, n):
                 except:
                     return ALPHABET[i+n-len(ALPHABET)]
 
-
 def cesar(letter, n): 
     i = (ALPHABET.index(letter.lower()) + n)%len(ALPHABET)
     return ALPHABET[i]
@@ -24,7 +20,6 @@ def cifrar(string, n):
     for letter in string:
         clear_string += cesar(letter, n)
     return clear_string
-
 
 def metacifrar(n):
     '''sirve para inyectar un parámetro y crear una función euivalente a cifrar'''

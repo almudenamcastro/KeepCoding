@@ -1,10 +1,10 @@
+# Queremos crear un programa que calcule la retención IRPF según estado civil, hijos y sueldo
+
 # pedir datos. 
 
 estado_civil = input ("Situación (1, 2, 3): ")
 hijos = int(input("número de hijos: "))
 sueldo = float (input("Sueldo: "))
-
-
   
 # calcular exención.
 if estado_civil == '1':
@@ -78,3 +78,18 @@ if base - tramo0 >0:
 
 #mostrar resultados
 print ("Retención: \t", ret)
+
+
+# nota: la diferencia entre if y elif es que: 
+# if siempre se evalúa (independientemente de la condición anterior)
+# elif solo se evalúa si la condición anterior era False
+
+def elifif(x):
+    if x > 1: #si es mayor que 1
+        print("es mayor que 1, if")
+    elif x > 0: #si NO es mayor que 1 Y ES mayor que 0 
+        print("es menor que 1 y mayor que 0, elif")
+    if x> 0: #si es mayor que 0 (luego también es mayor que 1)
+        print("es mayor que 0, if") 
+    else: 
+        print("else")
