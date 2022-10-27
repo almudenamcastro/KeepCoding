@@ -12,7 +12,7 @@ def process_element(matrix, i, j):
         if k in range(len(matrix)):
             values.append(matrix[k][j])
         k = j + value
-        if k in range(len(matrix[0])):
+        if k in range(len(matrix[i])):
             values.append(matrix[i][k])
     
     return sum(values)/len(values)
@@ -32,6 +32,10 @@ def process_matrix(matrix):
     return avg_matrix
 
 test = [[1,2,3],[4,5,6],[7,8,9]]
+test2= [[1.1, 1.2, 1.3, 1.4, 1.5],[2.1,2.2,2.3,2.4,2.5],[3.1,3.2,3.3,3.4,3.5],[4.1,4.2,4.3,4.4,4.5]]
 
 process_matrix(test)
+
+process_matrix(test2)
+
 process_element(test, 2, 2)
