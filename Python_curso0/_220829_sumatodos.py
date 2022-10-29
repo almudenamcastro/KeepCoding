@@ -4,7 +4,6 @@ def sumatodos(n):
         total += i
     return total
 
-
 def cuadrado(i):
     return i*i
 

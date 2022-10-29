@@ -1,4 +1,4 @@
-from Gritando._220828_funciones1clase import *
+from _220828_dialogo_funciones import *
 
 dialogo = [
     ("hola", shout),

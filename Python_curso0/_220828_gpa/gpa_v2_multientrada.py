@@ -1,4 +1,4 @@
-from gpa.gpa_v2_functions import numeric_grade
+from _220828_gpa.gpa_v2_functions import numeric_grade
 
 def multientrada(*values):
     for value in values:
