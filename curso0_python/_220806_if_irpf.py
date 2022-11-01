@@ -21,13 +21,13 @@ elif estado_civil == '2':
         exencion = 16481
     else: 
         exencion=17634 
-else: 
+elif estado_civil == '3': 
     if hijos <1: 
         exencion = 14000
     elif hijos == 1: 
         exencion = 14516
     else: 
-        exencion = 15093 
+        exencion = 15093
 
 
 # calcular base a retener.
