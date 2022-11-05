@@ -1,3 +1,6 @@
+# INPUT
+# we can use input function to ask the user for some data. 
+
 # presentación
 name = input("¿Cómo te llamas? ")
 print("Hola", name)
