@@ -64,7 +64,7 @@ area_media <- df_seeds  |>
 
 for (i in 1:nrow(area_media)){
   print(paste("El área media de las semillas de tipo", area_media[[i,1]],
-              "en mm cuadrados es", round(area_media[i,2],2)))
+              "es", round(area_media[i,2],2), "mm2"))
 }
 
 ```
@@ -114,7 +114,7 @@ df_seeds_train <- df_seeds[idx,]
 df_seeds_test <- df_seeds[-idx,]
 ```
 
-**Respuesta**: Para comprobar la validez del modelo. Si "testamos" un modelo con los mismos datos que hemos usado en el entrenamiento, corremos el riesgo de que el modelo solo de una respuesta correcta para esos datos, que ya conoce. Podría tratarse de un modelo sobre entrenado, en ese sentido: muy preciso para cierto conjunto de datos, pero demasiado rígido como para predecir otros resultados que se salgan de ahí.
+**Respuesta**: Para poder comprobar la validez del modelo. Si "testamos" un modelo con los mismos datos que hemos usado en el entrenamiento, corremos el riesgo de que el modelo solo de una respuesta correcta para esos datos, que ya conoce. Podría tratarse de un modelo sobre entrenado, en ese sentido: muy preciso para cierto conjunto de datos, pero demasiado rígido como para predecir otros resultados que se salgan de ahí.
 
 #### PREGUNTA 8
 
@@ -122,7 +122,7 @@ Vamos a crear un modelo para realizar una clasificación binaria, donde le pasar
 
 ¿Qué tipo de algoritmo o modelo debería usar?
 
-**Respuesta**: 'Usaremos la función de regresión logística, que nos sirve para ajustar datos que siguen una distribución binaria (datos cuyo valor puede ser 0 o 1).
+**Respuesta**: 'Usaremos un modelo de regresión logística, para ajustar datos que siguen una distribución binaria (datos cuyo valor puede ser 0 o 1).
 
 #### PREGUNTA 9
 
@@ -132,7 +132,7 @@ Crea un modelo que me permita clasificar si una semilla es de tipo Kama o no con
 
 ```{r}
 
-model_kama <- glm(data=df_seeds_train, formula = is_kama ~.-anchura-tipo, family=binomial(link='logit'))
+model_kama <- glm(data=df_seeds_train, formula = is_kama ~.-anchura-tipo, family='binomial'(link='logit'))
 
 ```
 
