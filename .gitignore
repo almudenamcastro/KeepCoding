@@ -9,9 +9,18 @@ kc_clases
 .AppleDouble
 .LSOverride
 
+
+### R ###
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+.RData
+.RDataTmp
+
 # Icon must end with two \r
 Icon
-
 
 # Thumbnails
 ._*
