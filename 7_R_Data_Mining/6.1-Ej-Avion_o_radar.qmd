@@ -1,0 +1,339 @@
+---
+title: "6.1-Ejemplo radar"
+format: html
+editor: visual
+---
+
+## 6.1- Ejemplo de clasificación: ¿avión o radar?
+
+Trabajamos en un RADAR y queremos saber si hemos detectado un avión a es solo ruido.
+
+![](pics/radar.png)
+
+Para ello recurrimos a una base de datos con información sobre potencia y distancia a la que se ha detectado cierta señal.
+
+```{r}
+options(repr.plot.height=4,repr.plot.width=8,repr.plot.res = 300)
+
+library(ggplot2)
+
+radar<-read.csv("data/radar-lite.csv", stringsAsFactors = T)
+summary(radar)
+```
+
+Y pintamos los datos a ver qué pinta tienen.
+
+```{r}
+ggplot(radar,aes(x=distancia,y=potencia,color=tipo))+geom_point(size=3)+
+ ylab("potencia [mW]")+xlab("distancia [Km]")
+```
+
+### Regresión lineal:
+
+Podemos intentar hacer una clasificación con un modelo lineal. Para ello, creamos una nueva columna *tipo.n* y le asignamos los valores 0 y 1:
+
+-   avión = 1
+-   ruido = 0
+
+```{r}
+# usamos relevel para asignar el primer valor del factor a ruido. 
+
+radar$tipo <- relevel(radar$tipo,ref="ruido")
+
+
+radar$tipo.n[radar$tipo=="avion"] <- 1
+radar$tipo.n[radar$tipo=="ruido" ]<- 0
+
+summary(radar)
+```
+
+Queremos que este modelo lineal (que tiene como entrada los demás parámetros) funcione de manera que:
+
+$$ tipo.n = \beta_0 + \beta_1·distancia + \beta_2·potencia $$
+
+Entonces:
+
+-   si tipo.n \>= 0.5 es un avión
+
+-   si tipo.n \< 0.5 es ruido
+
+La recta que marcará el umbral será:
+
+$$ 0.5 = \beta_0+\beta_1·distancia+\beta_2·potencia $$
+
+Y reordenando un poco los términos, obtenemos:
+
+$$ potencia = \frac{0.5 - \beta_0}{\beta_2} + \frac{- \beta_1}{\beta_2}·distancia $$
+
+```{r}
+set.seed(1)
+set.seed(2)
+
+# Definimos los dataframes para test y training. 
+itrain <- sample(1:nrow(radar),round(nrow(radar)*0.7))
+
+radar.train<- radar[itrain,]
+radar.test <- radar[-itrain,]
+
+# calculamos la regresión lineal. 
+modellm<-lm(data=radar.train,formula=tipo.n~distancia+potencia)
+beta<-modellm$coefficients
+
+ggplot(radar.train,aes(x=distancia,y=potencia,color=tipo))+geom_point(size=3)+
+ geom_abline(intercept = (0.5-beta[1])/beta[3],slope = -beta[2]/beta[3], color="red" )
+```
+
+### Regresión logística:
+
+El modelo lineal es muy limitado en este caso. Los datos lógicos solo pueden tomar dos valores, 1 o 0, mientras que una línea se extiende mucho más allá.
+
+```{r}
+summary(radar.train)
+summary(radar.test)
+```
+
+```{r}
+model <- glm(data=radar.train, formula=tipo~distancia+potencia, family=binomial(link='logit'))
+
+betalg <- model$coefficients
+
+ggplot(radar.train,aes(x=distancia, y=potencia, color=tipo)) + 
+  geom_point(size=3) +
+  geom_abline(intercept = (0.5-beta[1])/beta[3],slope = -beta[2]/beta[3], color="red" )    +
+  geom_abline(intercept = -betalg[1]/betalg[3],slope = -betalg[2]/betalg[3], color="blue" )
+```
+
+```{r}
+out <- radar.test
+
+# añadimos una columna y con la predicción del modelo. 
+out$logodds <- predict(model,radar.test)
+
+ggplot(out, aes(x=logodds, color=tipo)) + 
+  geom_histogram(aes(fill=tipo)) + 
+  xlab("odds")
+```
+
+**ojo**: la salida del modelo es $\ln Odds$. No nos da la probabilidad directamente. Para obtener una probabilidad, debemos usar el sigmoide:
+
+```{r}
+out<-radar.test
+
+out["logodds"] <- predict(model, radar.test)
+out["probs"] <- 1/(1+exp(-out["logodds"]))
+
+#Así tendríamos una función de densidad de la probabilidad: 
+ggplot(out,aes(x=probs,color=tipo))+geom_density()
+```
+
+```{r}
+# también podemos obtener la probabilidad directamente si añadimos como parámetro "response" dentro de la función predict. 
+
+out["probs"] <- predict (model,radar.test, type="response")
+
+ggplot(out,aes(x=probs,color=tipo))+geom_density()
+```
+
+### Matriz de confusión:
+
+```{r}
+# inicializo una matriz de 2*2 con valores 0 (aunque no es necesario para usar table). 
+# la función rep repite un valor (0) el número indicado de veces (4)
+
+M <- matrix(rep(0,4),ncol = 2)
+```
+
+```{r}
+#guardamos la predicción del modelo en el vector radar_pred. 
+radar_pred <- predict(model, radar.test)
+
+#defino un valor umbral (que separa los valores sobre log(Odds)):
+umbral <- 2
+```
+
+```{r}
+#usando el umbral definido, convierto los valores del vector anterior (radar_pred) en un factor avion/ruido. 
+
+y_est = factor( ifelse(radar_pred < umbral, 0, 1), labels=c("ruido","avion"))
+
+```
+
+```{r}
+#ya puedo calcular la matriz de confusión:
+
+M = table(real=radar.test$tipo, predicho=y_est)
+```
+
+```{r}
+#pintamos los dos modelos)
+ggplot(radar.test,aes(x=distancia,y=potencia,color=tipo)) + 
+  geom_point(size=3) + 
+  geom_abline(intercept=(-betalg[1])/betalg[3], slope=-betalg[2]/betalg[3], color="blue", linetype="dashed") +
+  geom_abline(intercept = (umbral-betalg[1])/betalg[3],slope = -betalg[2]/betalg[3], color="blue" )
+```
+
+### Curva ROC
+
+
+```{r}
+umbral<- -10
+radar_pred  <-predict(model,radar.test)
+
+df_preds<-data.frame(pred=radar_pred,
+                     tipo_pred=factor(ifelse(radar_pred < umbral,0,1),labels=c("ruido","avion")),
+                     tipo_real=radar.test$tipo)
+df_preds<-df_preds[order(df_preds$pred, decreasing=FALSE),]
+
+M<-table(df_preds$tipo_real,df_preds$tipo_pred)
+ #table(real=radar.test$tipo,elegimos=y_est)
+
+#Recall, Exhaustividad, Tasa Verdadero positivo
+truePositive<-M[2,2]/(M[2,2]+M[2,1]) 
+
+#Tasa Falso positivo
+falsePositive<-M[1,2]/(M[1,2]+M[1,1])
+paste("tp:",truePositive,"  fp:",falsePositive)
+M
+
+df_preds
+```
+
+```{r}
+calctp_fp<-function(y_predict,y_real,th){
+    y_est<-ifelse(y_predict<th,0,1)
+
+    M<-table(y_real,y_est)
+    #print(M)
+    if (ncol(M)==2 && nrow(M)==2){
+        truePositive<-M[2,2]/(M[2,2]+M[2,1])                     
+        falsePositive<-M[1,2]/(M[1,2]+M[1,1])
+        c(tp=truePositive,fp=falsePositive)
+    }else{
+        c(tp=NA,fp=NA)
+    }
+}
+```
+
+```{r}
+calctp_fp(df_preds$pred,df_preds$tipo_real,th=-1)
+```
+
+```{r}
+dfROC<-data.frame(th=unique(df_preds$pred),tp=NA,fp=NA,model="model1")
+
+#for (th in seq(min(df_preds$pred),max(df_preds$pred),length.out=10)){
+#    calctp_fp(df_preds$pred,df_preds$tipo_real,th=th)
+#}
+for (i in 1:nrow(dfROC)){
+    v<-calctp_fp(df_preds$pred,df_preds$tipo_real,th=dfROC$th[i])
+    dfROC$tp[i]<-v["tp"]
+    dfROC$fp[i]<-v["fp"]
+}
+ggplot(data=dfROC,aes(x=fp,y=tp))+geom_path()
+```
+
+La curva ROC sale tan escalonada porque tenemos pocas muestras. Vamos a probar con un dataset más grande:
+
+```{r}
+radar_big<-read.csv("data/radar.csv", stringsAsFactors = T)
+radar_big$tipo<-relevel(radar_big$tipo,ref="ruido")
+
+set.seed(123)
+itrain<-sample(1:nrow(radar_big),round(nrow(radar_big)*0.7))
+radar_big.train<- radar_big[itrain,]
+radar_big.test <- radar_big[-itrain,]
+summary(radar_big.train)
+summary(radar_big.test)
+```
+
+```{r}
+model_radar1<-glm(data=radar_big.train,formula=tipo~distancia+potencia,family=binomial(link='logit'))
+```
+
+```{r}
+
+df_preds<-data.frame(pred=predict(model_radar1,radar_big.test),                     
+                     tipo_real=radar_big.test$tipo)
+
+dfROC<-data.frame(th=unique(df_preds$pred),tp=NA,fp=NA,model="model1")
+dfROC<-dfROC[order(dfROC$th),]
+
+
+for (i in 1:nrow(dfROC)){
+    v<-calctp_fp(df_preds$pred,df_preds$tipo_real,th=dfROC$th[i])
+    dfROC$tp[i]<-v["tp"]
+    dfROC$fp[i]<-v["fp"]
+}
+ggplot(data=dfROC,aes(x=fp,y=tp))+geom_path()
+```
+
+```{r}
+library(ROCR)
+
+#p<-predict(model_radar1,radar_big.test,type="response")
+p<-predict(model_radar1,radar_big.test)
+
+pr <- prediction(p, radar_big.test$tipo,  label.ordering=c("ruido","avion"))
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+plot(prf, colorize=TRUE)
+```
+
+```{r}
+model_radar2<-glm(data=radar_big.train,formula=tipo~I(distancia^2)+
+                  potencia,family=binomial(link='logit'))
+summary(model_radar2)
+```
+
+```{r}
+p<-predict(model_radar2,radar_big.test)
+pr2 <- prediction(p, radar_big.test$tipo,label.ordering=c("ruido","avion"))
+prf2 <- performance(pr2, measure = "tpr", x.measure = "fpr")
+
+plot(prf) 
+lines(prf2@x.values[[1]], prf2@y.values[[1]], col = 'red')
+legend(0.5,0.8,c("tipo~distancia+potencia","tipo~I(distancia^2)+potencia"), pch=c("-","-"),col=c("black","red"), y.intersp = 2)
+```
+
+```{r}
+?performance
+```
+
+```{r}
+prf <- performance(pr, measure = "prec", x.measure = "rec", label.ordering=c("ruido","avion"))
+plot(prf,colorize=TRUE)
+```
+
+### AUC
+
+```{r}
+pauc1<-performance(pr, measure = "auc", label.ordering=c("ruido","avion"))
+pauc1@y.values[[1]]
+```
+
+```{r}
+pauc2<-performance(pr2, measure = "auc", label.ordering=c("ruido","avion"))
+pauc2@y.values[[1]]
+```
+
+```{r}
+#library(pROC)
+rocobj1 <- pROC::roc(
+    radar_big.test$tipo,
+    predict(model_radar1,radar_big.test))
+
+rocobj2 <- pROC::roc(
+    radar_big.test$tipo,
+    predict(model_radar2,radar_big.test),
+    levels=c("ruido","avion"),direction="<")
+
+
+#plot(rocobj1, print.auc = TRUE, col = "blue")
+#plot(rocobj2, print.auc = TRUE, col = "green", print.auc.y = .4, add = TRUE)
+
+pROC::ggroc(list(model1=rocobj1, model2=rocobj2), alpha = 0.5, size = 2)+ xlab("1-FPR") + ylab("TPR") +
+geom_abline(slope = 1 ,intercept = 1, alpha=0.5) +
+  scale_colour_manual(values = c("red",  "#0000FF") ,name="Modelo", 
+                      labels=c(paste0("Modelo1. AUC:",pROC::auc(rocobj1)),
+                               paste0("Modelo2. AUC:",pROC::auc(rocobj2))))
+```
+

@@ -1,0 +1,51 @@
+---
+title: "6.2 - Ej. crioterapia"
+format: html
+editor: visual
+---
+
+#### Ejemplo
+
+Este conjunto de datos contiene información sobre los resultados del tratamiento de verrugas de 90 pacientes que utilizan crioterapia.
+
+https://archive.ics.uci.edu/ml/datasets/Cryotherapy+Dataset+
+
+```{r}
+cryo<-read.csv('data/Cryotherapy.csv')
+cryo$sex<-factor(cryo$sex,labels=c("Mujer","Hombre"))
+cryo$Type<-factor(cryo$Type,labels=c("Común","Plantar","Ambas"))
+cryo$Result_of_Treatment<-factor(cryo$Result_of_Treatment,labels=c("No","Si"))
+summary(cryo)
+```
+
+```{r}
+set.seed(0)
+num_train=round(0.7*nrow(cryo))
+train_ind<-sample(1:nrow(cryo),size = num_train)
+
+cryo.train=cryo[train_ind,]
+cryo.test =cryo[-train_ind,]
+summary(cryo.train)
+summary(cryo.test)
+```
+
+```{r}
+model<-glm(data=cryo.train,formula=Result_of_Treatment~.,family=binomial())
+```
+
+```{r}
+library(ROCR)
+options(repr.plot.height=4,repr.plot.width=6)
+
+
+p<-predict(model,cryo.test,type="response")
+
+pr <- prediction(p, cryo.test$Result_of_Treatment)
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+plot(prf)
+```
+
+```{r}
+prf_auc=performance(pr, measure = "auc")
+paste("The AUC is",prf_auc@y.values[[1]])
+```

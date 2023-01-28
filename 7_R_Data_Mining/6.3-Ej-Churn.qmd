@@ -1,0 +1,138 @@
+---
+title: "6.3 - Ej: Churn rate"
+format: html
+editor: visual
+---
+
+
+### Churn rate
+
+Vamos a utilizar un dataset publicado por IBM en [kaggle](https://www.kaggle.com/blastchar/telco-customer-churn).
+
+En este ejemplo vamos a cargar el dataset proporcionado y ver si somos capaces de ver qué usuarios son los que corren más riesgo de irse.
+
+El conjunto de datos incluye información sobre:
+
+-   Clientes que se fueron en el último mes: la columna se llama Churn
+-   Servicios para los que se ha registrado cada cliente: teléfono, líneas múltiples, Internet, seguridad en línea, copia de seguridad en línea, protección de dispositivos, soporte técnico y transmisión de TV y películas
+-   Información de la cuenta del cliente: cuánto tiempo han sido cliente (columna tenure), contrato, método de pago, facturación electrónica, cargos mensuales y cargos totales
+-   Información demográfica sobre los clientes: sexo, rango de edad y si tienen socios y dependientes
+
+```{r}
+dfchurn<-read.csv("data/WA_Fn-UseC_-Telco-Customer-Churn.csv", stringsAsFactors = T)
+head(dfchurn)
+str(dfchurn)
+```
+
+```{r}
+dfchurn$OnlineSecurity<-NULL
+dfchurn$OnlineBackup<-NULL
+dfchurn$DeviceProtection<-NULL
+dfchurn$TechSupport<-NULL
+dfchurn$StreamingTV<-NULL
+dfchurn$StreamingMovies<-NULL
+```
+
+```{r}
+summary(dfchurn)
+```
+
+Vemos que la mayor parte de las columnas son factores. Llama la atención la columna SeniorCitizen que parece numérica, veamos que valores tiene:
+
+```{r}
+unique(dfchurn$SeniorCitizen)
+table(dfchurn$SeniorCitizen)
+```
+
+Esta columna debería ser un factor, mirando otra parte de la documentación vemos que:
+
+1 = Si es senior citizen
+
+0 = No es senior citizen
+
+```{r}
+dfchurn$SeniorCitizen<-factor(dfchurn$SeniorCitizen,labels = c("No","Yes"))
+```
+
+Eliminamos la columna customerID porque no nos hace falta
+
+```{r}
+dfchurn$customerID<-NULL
+```
+
+```{r}
+set.seed(12)
+idx<-sample(1:nrow(dfchurn),0.7*nrow(dfchurn))
+dfchurn.train<-dfchurn[idx,]
+dfchurn.test<-dfchurn[-idx,]
+```
+
+```{r}
+summary(dfchurn.train)
+```
+
+```{r}
+model<-glm(data=dfchurn.train,formula=Churn~.,family=binomial())
+summary(model)
+```
+
+```{r}
+library(ROCR)
+options(repr.plot.height=4,repr.plot.width=6)
+ 
+
+df_pred<-data.frame(pred=predict(model,dfchurn.test,type="response"), 
+                    real= dfchurn.test$Churn)
+df_pred<-na.omit(df_pred)
+
+pr <- prediction(df_pred$pred, df_pred$real)
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+plot(prf)
+```
+
+```{r}
+prf_auc=performance(pr, measure = "auc")
+paste("The AUC is",prf_auc@y.values[[1]])
+```
+
+Repasemos la matriz de confusión:
+
+| .                  | Predecimos condición negativa | Predecimos condición positiva |
+|------------------|---------------------------|---------------------------|
+| Condición negativa | $M_{11}$                      | $M_{12}$                      |
+| Condición positiva | $M_{21}$                      | $M_{22}$                      |
+
+**Precisión** : $\frac{M_{22}}{M_{12}+M_{22}}$. Cuantos aciertos tengo del total de predicciones. Nos habla de **calidad**.
+
+**Exhaustividad** o **sensibilidad** (recall, true positive rate): $\frac{M_{22}}{M_{21}+M_{22}}$. Que ratio de los aciertos positivos soy capaz de encontrar. Nos habla de **cantidad** de encuentros.
+
+**Exactitud** (Accuracy): $\frac{M_{11}+M_{22}}{M_{11}+M_{12}+M_{21}+M_{22}}$: Cuantas predicciones correctas he hecho.
+
+**Valor-F**: $F_\beta=(1+\beta^2)\frac{Precisión·Exhaustividad}{\beta^2·Precisión+Exhaustividad}$
+
+```{r}
+library(caret)
+library(e1071)
+
+
+cf_m<-confusionMatrix(data=factor(predict(model,dfchurn.test,type="response")>0.5,
+                                  labels=c("No","Yes")), 
+                      reference=dfchurn.test$Churn,
+                      positive="Yes")
+cf_m
+# Más información de como obtener esas figuras:
+# https://www.rdocumentation.org/packages/caret/versions/6.0-85/topics/confusionMatrix
+```
+
+```{r}
+paste("La precisión es:",cf_m$table[2,2]/sum(cf_m$table[2,]))
+paste("La exhaustividad (recall, sensitivity) es:",cf_m$table[2,2]/sum(cf_m$table[,2]))
+paste("La exactitud (accuracy) es:",(cf_m$table[2,2]+cf_m$table[1,1])/sum(cf_m$table))
+
+bnt_test=binom.test(cf_m$table[2,2]+cf_m$table[1,1],sum(cf_m$table))
+paste("El intervalo de confianza de la exactitud es: [",paste0(bnt_test$conf.int,collapse=","),"]")
+```
+
+Se puede profundizar más en estos datos mirando el notebook:
+
+https://www.kaggle.com/farazrahman/telco-customer-churn-logisticregression

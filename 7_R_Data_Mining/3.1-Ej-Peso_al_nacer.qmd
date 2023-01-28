@@ -4,17 +4,13 @@ format: html
 editor: visual
 ---
 
-
 # Peso al nacer
 
-Leer el dataset que se encuentra en data/birthweight_reduced.csv. Quedarse con la columnas Birthweight y smoker. 
-Es un dataset donde se muestra el peso de los bebes al nacer de madres fumadoras y no fumadoras.
+Leer el dataset que se encuentra en data/birthweight_reduced.csv. Quedarse con la columnas Birthweight y smoker. Es un dataset donde se muestra el peso de los bebes al nacer de madres fumadoras y no fumadoras.
 
 Para cada grupo de fumadoras/no fumadoras calcular el peso medio, mediana y quartiles.
 
 Pintar un boxplot por cada grupo
-
-
 
 # Población española INE
 
