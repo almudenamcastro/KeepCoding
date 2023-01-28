@@ -1,0 +1,571 @@
+---
+title: "Regresión logística"
+format: html
+editor: visual
+  markdown: 
+    wrap: 72
+---
+
+# Regresión logística
+
+En lugar de realizar una predicción de un valor queremos hacer un clasificador.
+
+Si lo que tenemos son dos grupos y queremos realizar una clasificación, tenemos que realizar ciertas modificaciones a la regresión lineal.
+
+La fórmula de la regresión lineal es:
+
+$$ 
+\hat{Y}=\beta\_1 X_1+\beta\_2 X_2+\cdots +\beta\_p X_p = \sum \beta\_k X_k 
+$$
+
+Podemos tratar de asignar una probabilidad. Pero hay un problema porque esta regresión va entre 0 y 1.
+
+### Distribución binomial:
+
+De hecho, esto no es del todo correcto porque los datos **NO** siguen una distribución gaussiana. Siguen una distribución **binomial** con dos posibles valores 0 o 1.
+
+La distribución binomial es una generalización de la distribución de Bernoulli para $n$ sucesos independientes, cada uno de los cuales tiene dos posibles resultados Si/No con probabilidad $p$. (por ejemplo: tiramos al aire 3 monedas y mirarmos cual es la probabilidad de que 2 salgan cara).
+
+Variables que definen la distribución:
+
+-   p: probabilidad de éxito de un caso individual
+-   n: número de eventos totales que se desean medir
+-   k: número de eventos que ha salido SI.
+
+Estimadores: -
+
+-   **media**:
+
+$$ 
+\mu = n· p
+$$
+
+-   **varianza**:
+
+$$
+\sigma^2=n·p·(1-p)
+$$
+
+Si tenemos $n$ sucesos independientes que siguen una distribución de Bernoulli, ¿cual es la probabilidad de que $k$ sucesos sean positivos? Si sabemos que la probabilidad de un suceso ($k=1$) que sigue una distribución Bernoulli viene dada por la función de distribución:
+
+$$
+Pr_{Bernoulli}(X=k) = p^k (1-p) ^{n-k} \qquad k \in \left\{0, 1 \right\}
+$$
+
+Al tener $k$ sucesos donde $k \in \left\{0,1,2,...,n \right\}$, la función será la de Bernoulli multiplicada por el coeficiente binomial:
+
+$$ 
+Pr(X=k)=\binom{n}{k}p^k(1-p)^{n-k} \qquad \binom{n}{k}=\frac{n!}{k!(n-k)!}
+$$
+
+La función acumulativa será:
+
+$$ Pr(X \leq k)= \sum_{i=0}^{k-1} \binom{n}{k}p^k(1-p)^{n-k} $$
+
+### Función de enlace (link function)
+
+Para pasar del dominio de números reales $(-\infty,\infty)$ al de probabilidades $[0,1]$ a vamos a utilizar la **función logística**: 
+
+$$ p = h(x)= \frac{1}{1+e^{-x}} $$
+
+```{r}
+# Pintamos la función logística: 
+x <- seq(-10,10,length.out = 100)
+y <- 1/(1+exp(-x))
+plot(x,y,t="l")
+```
+
+Su inversa se conoce como la función **logit**:
+
+$$ 
+h^{-1}(p) = ln \left( \frac{p}{1-p} \right) 
+$$
+
+```{r}
+# Pintamos la función logit: 
+x <- seq(0,1,length.out = 100)
+y <- log(x/(1-x))
+plot(x,y,t="l")
+```
+
+Cuando estemos trabajando con una **distribución binomial** un modelo lineal del tipo:
+
+$$ y = \vec{\beta} \vec{x}+\beta_0 $$
+
+será:
+
+$$ 
+y = p(x) = \frac{1}{1+e^{-\vec{\beta} \vec{x}-\beta_0}} 
+$$
+
+**Nota:** Por ejemplo, si usamos solo un parámetro como entrada, con los coeficientes $\beta_0$ y $\beta_1$ estaríamos aplicamos una transformación lineal sobre la x y luego introduciéndola como parámetro de la función logística. Sería como estirar y desplazar lateralmente la función.
+
+Ahora $p(x)$ es una función que devuelve valores en el rango $[0,1]$, puede ser considerada como una probabilidad. Y podemos usarla como clasificador:
+
+-   si p(x)\>=0.5 seleccionamos clase 1
+-   si p(x)\< 0.5 seleccionamos clase 0
+
+Es decir, tenemos una probabilidad, su valor está en el rango $[0,1]$:
+
+$$ p = \frac{1}{1-e^{-\hat{Y}}}= \frac{1}{1-e^{-(\beta_1 X_1+\beta_2 X_2+\cdots +\beta_p X_p)}}$$
+
+### Razón de monomios: Definimos la razón de monomios (Odds ratio) como el cociente entre dos probabilidades, su valor está en el rango $[0,\infty]$:
+
+$$ Odds=\frac{p(\vec{x})}{1-p(\vec{x})} = \frac{\frac{1}{1+e^{-\beta \vec{x}-\beta_0}}}{1-\frac{1}{1+e^{-\beta \vec{x}-\beta_0}} } = \frac{1}{1+e^{-\vec{\beta} \vec{x}-\beta_0}-1} $$ 
+
+Simplificando:
+
+$$ Odds= e^{\vec{\beta} \vec{x}+\beta_0} =e^{(\beta_1 X_1+\beta_2 X_2+\cdots +\beta_p X_p)} $$
+
+Si aplicamos el logaritmo a la razón de monomios, volvemos a obtener la función logit, cuyo valor está comprendido entre $[-\infty,\infty]$:
+
+$$ ln(Odds)= ln \left(\frac{p}{1-p} \right) = \beta_1 X_1+\beta_2 X_2+\cdots +\beta_p X_p $$ 
+
+### Optimización de la función de coste:
+
+La **función de coste** es una función que nos permite calcular la diferencia entre los valores predichos por un modelo y los datos que tenemos. De manera general, se podría expresar como:
+
+$$
+Cost(p(x),y) = L(\beta)= {1 \over n} \sum_{i=0}^n{(y_i-\vec{y_i})^2} = {1 \over n} \sum_{i=0}^n{(y_i-p(\beta \vec {x_i}))^2}
+$$ 
+
+Donde los valores $y_i$ con los datos reales que tenemos, mientras que $p(x_i)$ son los valores predichos por el modelo. La anterior es la función que debíamos minimizar en el caso de la regresión lineal para obtener los coeficientes $\beta_i$.
+
+En el caso de la regresión logística, la cosa se complica un poco. En este caso no queremos minimizar la "distancia" entre dos puntos (los datos $y_i$ y su proyección sobre la recta $p(x_i)$). Como los valores $y_i$ solo pueden valer 1 o 0, lo que queremos, en este caso, es maximizar el número total de aciertos. Esto se expresa mediante una función de coste que tiene la siguiente forma:
+
+$$L(\beta) = \prod_i^n  p(\beta \vec{x_i})^{y_i}·(1-p(\beta \vec{x_i}))^{1-y_i}$$ 
+
+Lo **bonito** de esta función de coste $L(\beta_i)$ es que siempre que acertamos (es decir siempre que tanto $y_i$ como $p(x_i)$ valen 1 o cuando ambas valen 0), el coste toma una valor de 1. Mientras que si fallamos (cuando $y_i$=1 y $p(x_i)\approx 0$ o viceversa), el coste pasa a valer 0\*.
+
+-   **Nota**: puede resultar contraintuitivo que el coste "aumente" con los aciertos. A veces esta misma función se encuentra con los exponentes cambiados de signo (esto hace que uno de los términos tienda a $0^-1$ en caso de error). Pero ambas son equivalentes. Si $L(\beta_i)$ aumenta con los aciertos, querremos maximizarla. Si disminuye, querremos minimizarla. A gusto del consumidor.
+
+-   **Nota 2**: Mola mucho que cada término de $L(\beta_i)$ sea, en sí mismo, una distribución de Bernoulli $p^x·(1-p)^{1-x}$...
+
+Como el productorio es poco manejable, podemos usar logaritmos y convertir la función de coste en:
+
+$$ 
+\ln (L(\beta)) = \frac{1}{n}\sum_i^n \ln \left( p(\beta\vec{x_i})^{y_i}·(1-p(\beta\vec{x_i}))^{1-y_i}\right) \\ 
+= \frac{1}{n}\sum_i^n y_i ·\ln p(\beta\vec{x_i}) + (1-y_i)·\ln (1-p(\beta\vec{x_i})) \\
+$$ 
+
+Derivando esta función (con un poco de paciencia, ver https://www.youtube.com/watch?v=wB2aW7VMHOI), llegamos a:
+
+$$
+\frac {d L(\beta)}{d\beta}=\frac{1}{n}\sum _i ^n (y_i - p(\beta \vec{x_i})· \bar x
+$$
+
+### Generalized Linear Models
+
+En R, para obtener calcular un modelo basado en este tipo de regresión logística, utilizaremos la función glm. Le pasaremos como parámetros: \* **formula:** ej: formula = y \~ x1 + x2 +... \* **family:** binomial(link="logit") \* **data:** el dataframe que usemos para el entrenamiento.
+
+```{r}
+?glm
+```
+
+**ojo**: La salida del modelo es log(odds):
+
+$$ y = log(Odds) = \beta_1 X_1+\beta_2 X_2+\cdots +\beta_p X_p $$
+
+Si queremos la probabilidad tenemos que aplicar un poco de cálculo e invertir, nuevamente, la función logit: 
+
+$$ Odds = \frac{p}{1-p} $$
+
+$$ y = log(Odds) = log \left( \frac{p}{1-p} \right) \\ p=\frac{1}{1+e^{-y}} $$
+
+## Matriz de confusión
+
+Aquí lo que tenemos es un clasificador con dos hipótesis $H_0$ (hipótesis negativa) y $H_1$ (hipótesis positiva). Si nuestro test estadístico dice que la hipótesis $H_1$ es cierta pero en realidad la que es cierta es la hipótesis $H_0$ estaremos cometiendo un error. El tipo de error depende de si nos hemos equivocado prediciendo $H_0$ o $H_1$.
+
+| .            | Elegimos $H_0$                | Elegimos $H_1$               |
+|------------------|---------------------------|---------------------------|
+| $H_0$ cierta | No hay error                  | Error tipo I, falso positivo |
+| $H_1$ cierta | Error tipo II, falso negativo | No hay error                 |
+
+La matriz de confusión lo que hace es contar el número de ocurrencias que ha habido en cada celda:
+
+### Medidas de calidad
+
+Imaginemos que tenemos la siguiente matriz de confusión:
+
+| .                  | Predecimos condición negativa | Predecimos condición positiva |
+|------------------|---------------------------|---------------------------|
+| Condición negativa | $M_{11}$                      | $M_{12}$                      |
+| Condición positiva | $M_{21}$                      | $M_{22}$                      |
+
+**Precisión** : $\frac{M_{22}}{M_{12}+M_{22}}$. Cuantos aciertos tengo del total de predicciones. Nos habla de **calidad**.
+
+**Exhaustividad** (recall, true positive rate): $\frac{M_{22}}{M_{21}+M_{22}}$. Que ratio de los aciertos positivos soy capaz de encontrar. Nos habla de **cantidad** de encuentros.
+
+**Exactitud** (Accuracy): $\frac{M_{11}+M_{22}}{M_{11}+M_{12}+M_{21}+M_{22}}$: Cuantas predicciones correctas he hecho.
+
+**Valor-F**: $F_\beta=(1+\beta^2)\frac{Precisión·Exhaustividad}{\beta^2·Precisión+Exhaustividad}$
+
+**Probabilidad de falso positivo** (false positive rate): $\frac{M_{12}}{M_{12}+M_{11}}$. Cuantos positivos **erróneos** he detectado de todos los negativos que hay.
+
+A veces la matriz de confusión se muestra cambiada, de hecho Python lo hace así, intercambia las filas y las columnas. Más información aquí: https://towardsdatascience.com/the-two-variations-of-confusion-matrix-get-confused-never-again-8d4fb00df308
+
+```{r}
+fscore<-function(M,beta){
+    pr=M[1,1]/(M[1,2]+M[1,1])
+    rc=M[1,1]/(M[2,1]+M[1,1])
+    (1+beta^2)*pr*rc/(beta^2*pr+rc)
+}
+
+paste("Precision:",M[2,2]/(M[1,2]+M[2,2]))
+paste("Recall, true positive rate:",   M[2,2]/(M[2,1]+M[2,2]))
+paste("False positive rate:",   M[1,2]/(M[1,2]+M[1,1]))
+paste("Accuracy:", (M[1,1]+M[2,2])/(M[1,1]+M[1,2]+M[2,1]+M[2,2]))
+paste("F0.5-score",fscore(M,0.5))
+paste("F1-score",fscore(M,1))
+paste("F2-score",fscore(M,beta=2))
+```
+
+## Curva ROC
+
+La curva ROC fue comenzada a usar durante la segunda guerra mundial para el análisis de las señales de radar. Después del ataque de Pearl Harbor en 1941, la armada de EEUU comenzó un programa de investigación para aumentar la predicción de los radares a la hora de detectar aviones japoneses. Para ello midieron la habiliad de un radar de detectar esas señales, esa medida la llamaron "Receiver Operating Characteristic".
+
+Se utiliza para ver la calidad de un detector, un clasificador binario capaz de detectar un elemento. Se hace un barrido por todos los umbrales y se mide el valor de positivo verdadero en función de falso positivo.
+
+```{r}
+umbral<- -10
+radar_pred  <-predict(model,radar.test)
+
+df_preds<-data.frame(pred=radar_pred,
+                     tipo_pred=factor(ifelse(radar_pred < umbral,0,1),labels=c("ruido","avion")),
+                     tipo_real=radar.test$tipo)
+df_preds<-df_preds[order(df_preds$pred, decreasing=FALSE),]
+
+M<-table(df_preds$tipo_real,df_preds$tipo_pred)
+ #table(real=radar.test$tipo,elegimos=y_est)
+
+#Recall, Exhaustividad, Tasa Verdadero positivo
+truePositive<-M[2,2]/(M[2,2]+M[2,1]) 
+
+#Tasa Falso positivo
+falsePositive<-M[1,2]/(M[1,2]+M[1,1])
+paste("tp:",truePositive,"  fp:",falsePositive)
+M
+
+df_preds
+```
+
+```{r}
+calctp_fp<-function(y_predict,y_real,th){
+    y_est<-ifelse(y_predict<th,0,1)
+
+    M<-table(y_real,y_est)
+    #print(M)
+    if (ncol(M)==2 && nrow(M)==2){
+        truePositive<-M[2,2]/(M[2,2]+M[2,1])                     
+        falsePositive<-M[1,2]/(M[1,2]+M[1,1])
+        c(tp=truePositive,fp=falsePositive)
+    }else{
+        c(tp=NA,fp=NA)
+    }
+}
+```
+
+```{r}
+calctp_fp(df_preds$pred,df_preds$tipo_real,th=-1)
+```
+
+```{r}
+dfROC<-data.frame(th=unique(df_preds$pred),tp=NA,fp=NA,model="model1")
+
+#for (th in seq(min(df_preds$pred),max(df_preds$pred),length.out=10)){
+#    calctp_fp(df_preds$pred,df_preds$tipo_real,th=th)
+#}
+for (i in 1:nrow(dfROC)){
+    v<-calctp_fp(df_preds$pred,df_preds$tipo_real,th=dfROC$th[i])
+    dfROC$tp[i]<-v["tp"]
+    dfROC$fp[i]<-v["fp"]
+}
+ggplot(data=dfROC,aes(x=fp,y=tp))+geom_path()
+```
+
+La curva ROC sale tan escalonada porque tenemos pocas muestras. Vamos a probar con un dataset más grande:
+
+```{r}
+radar_big<-read.csv("data/radar.csv", stringsAsFactors = T)
+radar_big$tipo<-relevel(radar_big$tipo,ref="ruido")
+
+set.seed(123)
+itrain<-sample(1:nrow(radar_big),round(nrow(radar_big)*0.7))
+radar_big.train<- radar_big[itrain,]
+radar_big.test <- radar_big[-itrain,]
+summary(radar_big.train)
+summary(radar_big.test)
+```
+
+```{r}
+model_radar1<-glm(data=radar_big.train,formula=tipo~distancia+potencia,family=binomial(link='logit'))
+```
+
+```{r}
+
+df_preds<-data.frame(pred=predict(model_radar1,radar_big.test),                     
+                     tipo_real=radar_big.test$tipo)
+
+dfROC<-data.frame(th=unique(df_preds$pred),tp=NA,fp=NA,model="model1")
+dfROC<-dfROC[order(dfROC$th),]
+
+
+for (i in 1:nrow(dfROC)){
+    v<-calctp_fp(df_preds$pred,df_preds$tipo_real,th=dfROC$th[i])
+    dfROC$tp[i]<-v["tp"]
+    dfROC$fp[i]<-v["fp"]
+}
+ggplot(data=dfROC,aes(x=fp,y=tp))+geom_path()
+```
+
+```{r}
+library(ROCR)
+
+#p<-predict(model_radar1,radar_big.test,type="response")
+p<-predict(model_radar1,radar_big.test)
+
+pr <- prediction(p, radar_big.test$tipo,  label.ordering=c("ruido","avion"))
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+plot(prf, colorize=TRUE)
+```
+
+```{r}
+model_radar2<-glm(data=radar_big.train,formula=tipo~I(distancia^2)+
+                  potencia,family=binomial(link='logit'))
+summary(model_radar2)
+```
+
+```{r}
+p<-predict(model_radar2,radar_big.test)
+pr2 <- prediction(p, radar_big.test$tipo,label.ordering=c("ruido","avion"))
+prf2 <- performance(pr2, measure = "tpr", x.measure = "fpr")
+
+plot(prf) 
+lines(prf2@x.values[[1]], prf2@y.values[[1]], col = 'red')
+legend(0.5,0.8,c("tipo~distancia+potencia","tipo~I(distancia^2)+potencia"), pch=c("-","-"),col=c("black","red"), y.intersp = 2)
+```
+
+```{r}
+?performance
+```
+
+```{r}
+prf <- performance(pr, measure = "prec", x.measure = "rec", label.ordering=c("ruido","avion"))
+plot(prf,colorize=TRUE)
+```
+
+### AUC
+
+Area bajo la curva (Area Under The Curve), número entre 0 y 1 que mide como de bueno es un clasificador.
+
+Es el area bajo la curva ROC, cuando su valor es: \* 1 significa que el clasificador es perfecto \* 0.5 significa que la elección es tan buena como hacerla al azar \* Menor de 0.5, significa que lo estamos haciendo peor que el azar
+
+```{r}
+pauc1<-performance(pr, measure = "auc", label.ordering=c("ruido","avion"))
+pauc1@y.values[[1]]
+```
+
+```{r}
+pauc2<-performance(pr2, measure = "auc", label.ordering=c("ruido","avion"))
+pauc2@y.values[[1]]
+```
+
+```{r}
+#library(pROC)
+rocobj1 <- pROC::roc(
+    radar_big.test$tipo,
+    predict(model_radar1,radar_big.test))
+
+rocobj2 <- pROC::roc(
+    radar_big.test$tipo,
+    predict(model_radar2,radar_big.test),
+    levels=c("ruido","avion"),direction="<")
+
+
+#plot(rocobj1, print.auc = TRUE, col = "blue")
+#plot(rocobj2, print.auc = TRUE, col = "green", print.auc.y = .4, add = TRUE)
+
+pROC::ggroc(list(model1=rocobj1, model2=rocobj2), alpha = 0.5, size = 2)+ xlab("1-FPR") + ylab("TPR") +
+geom_abline(slope = 1 ,intercept = 1, alpha=0.5) +
+  scale_colour_manual(values = c("red",  "#0000FF") ,name="Modelo", 
+                      labels=c(paste0("Modelo1. AUC:",pROC::auc(rocobj1)),
+                               paste0("Modelo2. AUC:",pROC::auc(rocobj2))))
+```
+
+#### Ejemplo
+
+Este conjunto de datos contiene información sobre los resultados del tratamiento de verrugas de 90 pacientes que utilizan crioterapia.
+
+https://archive.ics.uci.edu/ml/datasets/Cryotherapy+Dataset+
+
+```{r}
+cryo<-read.csv('data/Cryotherapy.csv')
+cryo$sex<-factor(cryo$sex,labels=c("Mujer","Hombre"))
+cryo$Type<-factor(cryo$Type,labels=c("Común","Plantar","Ambas"))
+cryo$Result_of_Treatment<-factor(cryo$Result_of_Treatment,labels=c("No","Si"))
+summary(cryo)
+```
+
+```{r}
+set.seed(0)
+num_train=round(0.7*nrow(cryo))
+train_ind<-sample(1:nrow(cryo),size = num_train)
+
+cryo.train=cryo[train_ind,]
+cryo.test =cryo[-train_ind,]
+summary(cryo.train)
+summary(cryo.test)
+```
+
+```{r}
+model<-glm(data=cryo.train,formula=Result_of_Treatment~.,family=binomial())
+```
+
+```{r}
+library(ROCR)
+options(repr.plot.height=4,repr.plot.width=6)
+
+
+p<-predict(model,cryo.test,type="response")
+
+pr <- prediction(p, cryo.test$Result_of_Treatment)
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+plot(prf)
+```
+
+```{r}
+prf_auc=performance(pr, measure = "auc")
+paste("The AUC is",prf_auc@y.values[[1]])
+```
+
+### Churn rate
+
+Vamos a utilizar un dataset publicado por IBM en [kaggle](https://www.kaggle.com/blastchar/telco-customer-churn).
+
+En este ejemplo vamos a cargar el dataset proporcionado y ver si somos capaces de ver qué usuarios son los que corren más riesgo de irse.
+
+El conjunto de datos incluye información sobre:
+
+-   Clientes que se fueron en el último mes: la columna se llama Churn
+-   Servicios para los que se ha registrado cada cliente: teléfono, líneas múltiples, Internet, seguridad en línea, copia de seguridad en línea, protección de dispositivos, soporte técnico y transmisión de TV y películas
+-   Información de la cuenta del cliente: cuánto tiempo han sido cliente (columna tenure), contrato, método de pago, facturación electrónica, cargos mensuales y cargos totales
+-   Información demográfica sobre los clientes: sexo, rango de edad y si tienen socios y dependientes
+
+```{r}
+dfchurn<-read.csv("data/WA_Fn-UseC_-Telco-Customer-Churn.csv", stringsAsFactors = T)
+head(dfchurn)
+str(dfchurn)
+```
+
+```{r}
+dfchurn$OnlineSecurity<-NULL
+dfchurn$OnlineBackup<-NULL
+dfchurn$DeviceProtection<-NULL
+dfchurn$TechSupport<-NULL
+dfchurn$StreamingTV<-NULL
+dfchurn$StreamingMovies<-NULL
+```
+
+```{r}
+summary(dfchurn)
+```
+
+Vemos que la mayor parte de las columnas son factores. Llama la atención la columna SeniorCitizen que parece numérica, veamos que valores tiene:
+
+```{r}
+unique(dfchurn$SeniorCitizen)
+table(dfchurn$SeniorCitizen)
+```
+
+Esta columna debería ser un factor, mirando otra parte de la documentación vemos que:
+
+1 = Si es senior citizen
+
+0 = No es senior citizen
+
+```{r}
+dfchurn$SeniorCitizen<-factor(dfchurn$SeniorCitizen,labels = c("No","Yes"))
+```
+
+Eliminamos la columna customerID porque no nos hace falta
+
+```{r}
+dfchurn$customerID<-NULL
+```
+
+```{r}
+set.seed(12)
+idx<-sample(1:nrow(dfchurn),0.7*nrow(dfchurn))
+dfchurn.train<-dfchurn[idx,]
+dfchurn.test<-dfchurn[-idx,]
+```
+
+```{r}
+summary(dfchurn.train)
+```
+
+```{r}
+model<-glm(data=dfchurn.train,formula=Churn~.,family=binomial())
+summary(model)
+```
+
+```{r}
+library(ROCR)
+options(repr.plot.height=4,repr.plot.width=6)
+ 
+
+df_pred<-data.frame(pred=predict(model,dfchurn.test,type="response"), 
+                    real= dfchurn.test$Churn)
+df_pred<-na.omit(df_pred)
+
+pr <- prediction(df_pred$pred, df_pred$real)
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+plot(prf)
+```
+
+```{r}
+prf_auc=performance(pr, measure = "auc")
+paste("The AUC is",prf_auc@y.values[[1]])
+```
+
+Repasemos la matriz de confusión:
+
+| .                  | Predecimos condición negativa | Predecimos condición positiva |
+|------------------|---------------------------|---------------------------|
+| Condición negativa | $M_{11}$                      | $M_{12}$                      |
+| Condición positiva | $M_{21}$                      | $M_{22}$                      |
+
+**Precisión** : $\frac{M_{22}}{M_{12}+M_{22}}$. Cuantos aciertos tengo del total de predicciones. Nos habla de **calidad**.
+
+**Exhaustividad** o **sensibilidad** (recall, true positive rate): $\frac{M_{22}}{M_{21}+M_{22}}$. Que ratio de los aciertos positivos soy capaz de encontrar. Nos habla de **cantidad** de encuentros.
+
+**Exactitud** (Accuracy): $\frac{M_{11}+M_{22}}{M_{11}+M_{12}+M_{21}+M_{22}}$: Cuantas predicciones correctas he hecho.
+
+**Valor-F**: $F_\beta=(1+\beta^2)\frac{Precisión·Exhaustividad}{\beta^2·Precisión+Exhaustividad}$
+
+```{r}
+library(caret)
+library(e1071)
+
+
+cf_m<-confusionMatrix(data=factor(predict(model,dfchurn.test,type="response")>0.5,
+                                  labels=c("No","Yes")), 
+                      reference=dfchurn.test$Churn,
+                      positive="Yes")
+cf_m
+# Más información de como obtener esas figuras:
+# https://www.rdocumentation.org/packages/caret/versions/6.0-85/topics/confusionMatrix
+```
+
+```{r}
+paste("La precisión es:",cf_m$table[2,2]/sum(cf_m$table[2,]))
+paste("La exhaustividad (recall, sensitivity) es:",cf_m$table[2,2]/sum(cf_m$table[,2]))
+paste("La exactitud (accuracy) es:",(cf_m$table[2,2]+cf_m$table[1,1])/sum(cf_m$table))
+
+bnt_test=binom.test(cf_m$table[2,2]+cf_m$table[1,1],sum(cf_m$table))
+paste("El intervalo de confianza de la exactitud es: [",paste0(bnt_test$conf.int,collapse=","),"]")
+```
+
+Se puede profundizar más en estos datos mirando el notebook:
+
+https://www.kaggle.com/farazrahman/telco-customer-churn-logisticregression

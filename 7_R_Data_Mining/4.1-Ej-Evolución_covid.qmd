@@ -1,0 +1,117 @@
+---
+title: "Evolución datos covid"
+format: html
+editor: visual
+---
+
+# Ejemplo: Evolución datos covid
+
+Qué vamos a aprender:
+
+-   Operador \|\>
+-   Librería [dplyr](https://dplyr.tidyverse.org/): group_by() y summarize()
+-   Librería [ggplot2](https://ggplot2.tidyverse.org/): geom_line() y geom_cols()
+
+Utilizaremos los datos de:
+
+https://cnecovid.isciii.es/covid19/#documentaci%C3%B3n-y-datos
+
+```{r}
+covid_url<-'https://cnecovid.isciii.es/covid19/resources/hosp_uci_def_sexo_edad_provres_todas_edades.csv'
+
+df_covid<-read.csv(url(covid_url), stringsAsFactors = T)
+
+#convertimos la fecha al formato correcto. 
+df_covid$fecha <- as.Date(df_covid$fecha)
+head(df_covid)
+```
+
+## Exploración preliminar
+
+Vamos a ver el número de provincias que tenemos. Los códigos de las provincias se pueden consultar aquí: https://es.wikipedia.org/wiki/ISO_3166-2:ES
+
+```{r}
+#unique nos devuelve los valores únicos de un vector. 
+unique(df_covid$provincia_iso)
+```
+
+Vamos a ver el rango de fechas de los datos que tenemos:
+
+```{r}
+paste("los datos van desde el día:")
+min(df_covid$fecha)
+paste("hasta la fecha más reciente, que es:")
+max(df_covid$fecha)
+
+```
+
+Consultemos ahora cuál ha sido el total de hospitalizados/UCI/fallecidos en este rango de fechas:
+
+```{r}
+colnames(df_covid)
+total_hosp <- sum(df_covid$num_hosp)
+total_uci <- sum(df_covid$num_uci)
+total_def <- sum(df_covid$num_def)
+
+paste("El número total de hospitalizados ha sido de:", total_hosp)
+paste("El número total de enfermos en UCI ha sido de:", total_uci)
+paste("El número total de defunciones ha sido de:", total_def)
+
+```
+
+Podemos calcular el número de casos que ha habido en un día determinado
+
+```{r}
+dia <- '2022-08-01'
+
+df_covid_dia <- df_covid[df_covid$fecha == dia, ]
+
+total_hosp_dia <- sum(df_covid$num_hosp)
+total_uci_dia <- sum(df_covid$num_uci)
+total_def_dia <- sum(df_covid$num_def)
+
+paste("El número total de hospitalizados el dia",dia,"fue de:", total_hosp_dia)
+paste("El número total de enfermos en UCI el dia",dia,"fue de:", total_uci_dia)
+paste("El número total de defunciones el dia",dia,"fue de:", total_def_dia)
+```
+
+## Agrupación:
+
+Si queremos calcular el número total de casos por días podemos usar librerías como dplyr, que nos permiten agrupar los datos en la dimensión que elijamos. Además de sum, podemos usar agregaciones como mean, max, min, mode...
+
+```{r}
+library(dplyr)
+
+df_covid_diario <- df_covid |>
+  group_by(fecha) |>
+  summarise(num_hosp = sum(num_hosp), 
+            num_uci = sum(num_uci),
+            num_def = sum(num_def))
+
+# Equivaldria a:
+#df_covid_diario <- summarise( 
+#             group_by(df_covid, fecha),
+#                  num_hospitalizados=sum(num_hosp),
+#                  num_uci=sum(num_uci),
+#             )
+```
+
+## Representación gráfica:
+
+Pintemos ahora la evolución diaria con ggplot:
+
+```{r}
+library(ggplot2)
+
+df_covid_diario |> ggplot(aes (x=fecha)) +
+  geom_line(aes(y=num_hosp, color="hospitalizados")) +
+  geom_line(aes(y=num_uci, color="internados en uci")) +
+  geom_line(aes(y=num_def, color="fallecidos")) +
+  scale_color_discrete(breaks = c("hospitalizados","internados en uci","fallecidos")) +
+  labs(title = "Número diario de pacientes COVID", 
+       subtitle= "Desde marzo de 2022", 
+       y = "Pacientes Covid",
+       color = "Pacientes") +
+  theme_bw()
+
+```

@@ -1,0 +1,44 @@
+---
+format: html
+editor: visual
+---
+
+# Análisis exploratorio de datos
+
+El análisis exploratorio de datos consiste en analizar los datos que tenemos para poder extraer conclusiones.
+
+Los gráficos son la mejor forma de representar los datos. Los estimadores estadísticos como la media, mediana o percentiles nos pueden dar una idea aproximada, pero su estructura se aprecia mucho mejor si podemos pintarlos.
+
+En esta sección vamos a ver como utilizar R y diferentes funciones del tidyverse para realizar diferentes gráficos.
+
+Algunas herramientas útiles: - operador \|\> - dplyr - ggplot
+
+## Operador \|\>
+
+El operador X \|\> fun() lo que hace es pasar el elemento X como primer parámetro a la función fun().
+
+Es decir, X \|\> fun(), es equivalente a fun(X). La ventaja es que se pueden concatenar funciones y usar la salida de una función como la entrada a la siguiente.
+
+Así X \|\> fun1() \|\> fun2() es equivalente a fun2(fun1(X))
+
+## Funciones útiles:
+
+Para consultar la documentación una función en detalle, podemos usar ?función.
+
+-   **seq(start, end, leap)**: genera un vector con una secuencia de números. En los dos primeros parámetros le pasamos el inicio y el final de la secuencia. El tercer parámetro puede indicar un salto o la longitud del vector de salida.
+
+```{r}
+seq(1,5)
+seq(1,5,2)
+seq(1,5, length.out=7)
+```
+
+-   **set.seed(seed)**:
+
+-   **rnorm (length, mean, var)**:
+
+## Librerías:
+
+-   **deplyr**: con funciones para agrupar datos como group_by y summarize.
+-   **ggplot**: para representar los datos gráficamente.
+-   **tidyverse**: descarga varias librerías asociadas a su tidiverso.

@@ -1,0 +1,97 @@
+---
+title: "2.1-Ejemplo-Actividad deportiva"
+format: revealjs
+editor: visual
+---
+
+## 2.1 Ejemplo: Actividad deportiva
+
+-   **read.csv:** leemos los datos de un csv.
+
+-   **stringsAsFactor=T**: Para memoria y acelerar procesos podemos convertir las columnas de texto en "factor". Factor es una variable cualitativa restringida.
+
+```{r}
+activities<-read.csv('data/activities_strava.csv', stringsAsFactor=T)
+head(activities)
+```
+
+Nos podemos quedar con ciertas columnas de interés:
+
+```{r}
+activities <- activities[,c('Activity.Name', 'Activity.Type', 'Elapsed.Time', 'Distance')]
+```
+
+Podemos añadir una columna por nombre, asignándole una serie de valores caculados:
+
+```{r}
+activities$duracion_minutos <- activities$Elapsed.Time/60
+head(activities)
+```
+
+Podemos ver su estructura:
+
+```{r}
+str(activities)
+```
+
+Podemos ver los nombres de las columnas y renombrarlas:
+
+```{r}
+colnames(activities)
+
+colnames(activities) <- c('Nombre_actividad','Tipo actividad', 'duracion_segundos', 'distancia', 'duracion_minutos')
+
+colnames(activities) <- c('Activity.Name', 'Activity.Type', 'Elapsed.Time', 'Distance', 'Elapsed.Min')
+
+head(activities)
+```
+
+Podemos pedir un resumen del data frame:
+
+```{r}
+summary(activities)
+```
+
+Podemos quedarnos solo con las actividades del tipo "Afternoon Ride" y con un tiempo inferior a 30 minutos para crear un nuevo dataframe:
+
+```{r}
+afternoon_activity <- activities[
+    activities$Activity.Name=='Afternoon Ride' &
+    activities$duracion_minutos<30,]
+
+head(afternoon_activity)
+```
+
+```{r}
+summary(afternoon_activity)
+```
+
+Podemos quedarnos solo con las actividades del tipo "Afternoon Ride" o y con un tiempo inferior a 30 minutos y superior a 15 minutos:
+
+```{r}
+afternoon_activity_30_15 <- activities[
+  which(activities$Nombre_actividad=='Afternoon Ride' &
+  activities$duracion_minutos<30 & 
+  activities$duracion_minutos>15),]
+
+head(afternoon_activity)
+```
+
+O hacer otros filtrados. Por ejemplo, quedarnos con las actividades del tipo "Afternoon Ride" o "Morning Ride" y con un tiempo inferior a 30 minutos y superior a 15 minutos:
+
+```{r}
+activities_15_30 <- activities[
+  which( (activities$Nombre_actividad=='Afternoon Ride' |
+          activities$Nombre_actividad=='Morning Ride') &
+          activities$duracion_minutos<30 & 
+      activities$duracion_minutos>15),]
+
+summary(activities_15_30)
+```
+
+Lo mismo usando which e %in%:
+
+```{r}
+activities_15_30 <- activities [which(activities$Nombre_actividad %in% c('Afternoon Ride', 'Morning Ride') & activities$duracion_minutos<30 & activities$duracion_minutos>15), ] summary(afternoon_activity_30_15)
+
+```

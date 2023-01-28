@@ -1,0 +1,125 @@
+---
+title: "Meteorología"
+format: html
+editor: visual
+---
+
+# Ejemplo: Meteorología
+
+La librería Nasa power contiene información de temperatura, precipitación y humedad obtenida por https://cran.r-project.org/web/packages/nasapower/vignettes/nasapower.html
+
+```{r}
+library('nasapower')
+library(tidyverse)
+library(zoo)
+```
+
+```{r}
+today <- format(Sys.time(), "%Y-%m-%d")
+today
+```
+
+Descargamos solo los datos que nos interesan con la función get_power de la librería nasapower. Para consultar la documentación y los posibles parámetros, tenemos el manual ?get_power
+
+```{r}
+df_weather <- get_power(
+  community = "ag",
+  lonlat = c(-3.8196207, 40.4378698),
+  # lonlat = c(-6.1486422, 42.0845743),
+  pars = c("RH2M", "T2M", "PRECTOTCORR", "T2M_MAX","T2M_MIN", "T10M_MAX","T10M_MIN"),
+  dates = c("1981-01-01", today),
+  temporal_api = "daily"
+)
+
+?get_power
+```
+
+### Limpieza de datos preliminar:
+
+Quitamos valores missing (NA). Ojo, R distingue entre NA (valores missing, desconocidos), valores NULL (valores cuyo valor es nulo) y valores NAN (not a number, como 1/0)
+
+```{r}
+df_weather <- df_weather[!is.na(df_weather$T2M),]
+tail(df_weather)
+str(df_weather)
+
+```
+
+Vamos a pintar la temperatura media por días:
+
+```{r}
+
+```
+
+Vamos a calcular la tempera media anual en una ventana movil
+
+```{r}
+```
+
+```{r}
+
+```
+
+Vamos a calcular la temperatura media anual, una muestra por cada año
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+Caclular temperaturas minimas para
+
+\* grupo1 1980-1989
+
+\* grupo2 2013-2022
+
+```{r}
+
+```
+
+### Evolución Co2
+
+```{r}
+df_co2 <- read_csv('https://nyc3.digitaloceanspaces.com/owid-public/data/co2/owid-co2-data.csv')
+```
+
+```{r}
+head(df_co2)
+```
+
+```{r}
+colnames(df_co2)
+```
+
+El significado de las columnas lo podemos extraer de aquí:
+
+```{r}
+read_csv('https://raw.githubusercontent.com/owid/co2-data/master/owid-co2-codebook.csv', show_col_types = FALSE)
+```
+
+Vamos a ver las emisiones de Co2 de todos los países:
+
+```{r}
+df_co2 |> group_by(year) |> summarize(co2=sum(co2,na.rm=T), co2_per_capita=sum(co2_per_capita,na.rm=T)) -> df_co2_anual
+```
+
+```{r}
+
+```
+
+Y lo comparamos con las emisiones de CO2 per cápita, mediante la variable co2_per_capita :
+
+```{r}
+
+```
+
+Vamos a importar los datos de Co2 atmosférico de aquí: https://www.co2.earth/co2-datasets
+
+para ver su evolución. Esta es la concentración de Co2 que hay en la atmósfera, frente a las otras gráficas que son las estimaciones de las emisiones.

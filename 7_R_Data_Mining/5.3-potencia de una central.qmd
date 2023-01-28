@@ -1,0 +1,75 @@
+---
+title: "Potencia de una central"
+format: html
+editor: visual
+---
+
+### Prediciendo la potencia de generación de una central de ciclo combinado
+
+El conjunto de datos contiene 9568 puntos de datos recopilados de una Central de Ciclo Combinado durante 6 años (2006-2011), cuando la planta de energía se puso a funcionar con carga completa. Las características consisten en variables ambientales promedio por hora, Temperatura Ambiente (AT), Presión ambiente (AP), Humedad relativa (HR) y Vacío de escape (V) para predecir la producción neta de energía eléctrica por hora (PE) de la planta.
+
+Las características consisten en variables ambientales promedio por hora - **Producción neta de energía** eléctrica por hora (PE) 420.26-495.76 MW - Temperatura (AT) en el rango de 1.81 ° C y 37.11 ° C, - Presión ambiental (AP) en el rango de 992.89-1033.30 milibares, - Humedad relativa (HR) en el rango de 25.56% a 100.16% - Vacío de escape (V) en el rango de 25.36-81.56 cm Hg
+
+Los promedios se toman de varios sensores ubicados alrededor de la planta que registran las variables ambientales cada segundo. Las variables se dan sin normalización.
+
+https://archive.ics.uci.edu/ml/datasets/Combined+Cycle+Power+Plant
+
+```{r}
+powerplant<-read.csv("data/powerplant.csv")
+str(powerplant)
+```
+
+```{r}
+library(GGally)
+ggpairs(powerplant,lower = list(continuous = wrap("points", alpha =0.2,size=0.1,color='blue')))
+# parecido a cor(powerplant)
+```
+
+Cuando creamos un modelo de Machine Learning es muy aconsejable dividit los datos en dos grupos.
+
+Un grupo, con entre el 70% y 80% de los datos que se utilizará para entrenar el modelo. Lo llamaremos dataframe de training.
+
+El resto de datos lo utilizaremos para evaluar la calidad del modelo. Son datos que no ha visto nuestro modelo y por tanto nos muestra como de bien o mal predicirá con datos nuevos. Estos son los datos de test.
+
+```{r}
+
+```
+
+Ahora calculamos el modelo con el dataset de train
+
+```{r}
+
+```
+
+Calculamos sus figuras de calidad, tanto en training como en testing:
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+Aquí vemos que el R² es bastante alto, tanto en training como en testing. Eso indica que es un buen modelo. Para asegurarnos miraremos los residuos.
+
+Os pueden salir diferentes resultados. Aquí van unas guias **aproximadas** de lo que puede estar occuriendo:
+
+-   RMSE_train \<\< RMSE_test o R_train\^2 \>\> R_test\^2: Significa que teneis overfitting. Teneis que hacer el modelo más sencillo. Con la regresión lineal aparecerá pocas veces.
+-   RMSE_test \~= RMSE_test o R_train\^2 \~= R_test\^2: Significa que NO teneis overfitting.
+-   R_test \<\< 0.2 : Significa que vuestro modelo predice mal
+-   R_test \>\> 0.7 : Significa que vuestro modelo predice bien
+
+También es buena práctica comprobar los residuos:
+
+-   Han de seguir una distribución normal.
+-   Su varianza debe ser constante.
+-   Los valores medios de los residuos deben estar centrados en 0
+
+```{r}
+
+```
+
+```{r}
+
+```

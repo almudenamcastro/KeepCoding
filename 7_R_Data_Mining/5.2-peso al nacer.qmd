@@ -1,0 +1,52 @@
+---
+title: "5.2 Peso al nacer"
+format: html
+editor: visual
+---
+
+## Ejemplo: Peso de los niños al nacer
+
+Este dataset contien información de bebes recien nacidos y sus padres. Podemos usarlo como regresión para ver cuales son los factores que más afectan al peso del niño.
+
+http://people.reed.edu/\~jones/141/BirthWgt.html
+
+Tenemos las siguientes variables que vamos a utilizar:
+
+| Nombre      | Variable                                       |
+|-------------|------------------------------------------------|
+| Birthweight | Peso al nacer (libras)                         |
+| Gestation   | Semanas que duró la gestación                  |
+| motherage   | Edad de la madre                               |
+| mnocig      | Número de cigarros al día fumados por la madre |
+| mheight     | Altura de la madre (pulgadas)                  |
+
+```{r}
+bwt<-read.csv("data/birthweight_reduced.csv")
+```
+
+Vamos a crear un modelo de regresión lineal en el que trataremos de obtener la el peso de un niño al nacer en función del tiempo de gestación, la edad de la madre, el número de cigarros que fumaba al día y su altura.
+
+```{r}
+#str(bwt)
+
+```
+
+Los valores que más influencia parecen tener son aquellos que presentan un pvalor (Pr) más bajo. El número de \* que hay a la derecha de cada fila indica su grado de confianza.
+
+La variable que más parece influir es la gestación, parece que por cada semana de gestación el bebé gana 0.33062 libras de peso. En cambio por cada cigarro al día que fuma la madre el peso del bebé podría disminuir en 0.02613 libras. La altura de la madre también parece tener cierta incluencia, por cada pulgada más que mida la madre el bebé pesará 0.13329 libras más. En cambio la edad de la madre parece no tener ningún efecto estadístico significativo.
+
+```{r}
+
+```
+
+Esto significa que podemos calcular el peso de un bebé al nacer mediante la siguiente formula:
+
+```{r}
+
+```
+
+¿Cuanto pesará en media un niño nacido de una madre no fumadora, con una altura de 35 pies, después de 42 semanas de gestación?
+
+```{r}
+
+```

@@ -1,0 +1,173 @@
+---
+title: "6.1-Ejemplo radar"
+format: html
+editor: visual
+---
+
+## 6.1- Ejemplo de clasificación: ¿avión o radar?
+
+Trabajamos en un RADAR y queremos saber si hemos detectado un avión a es solo ruido.
+
+![](pics/radar.png)
+
+Para ello recurrimos a una base de datos con información sobre potencia y distancia a la que se detecta cierta señal.
+
+```{r}
+options(repr.plot.height=4,repr.plot.width=8,repr.plot.res = 300)
+
+library(ggplot2)
+
+radar<-read.csv("data/radar-lite.csv", stringsAsFactors = T)
+summary(radar)
+```
+
+Y pintamos los datos a ver qué pinta tienen.
+
+```{r}
+ggplot(radar,aes(x=distancia,y=potencia,color=tipo))+geom_point(size=3)+
+ ylab("potencia [mW]")+xlab("distancia [Km]")
+```
+
+### Regresión lineal:
+
+Vamos intentar usar una regresión lineal para "separar" los datos que son avion de los que son ruido. Podemos hacer una clasificación con un modelo lineal donde creamos una nueva columna *tipo.n* y le asignamos:
+
+-   avión = 1
+-   ruido = 0
+
+```{r}
+# usamos relevel para asignar el primer valor del factor a ruido. 
+
+radar$tipo <- relevel(radar$tipo,ref="ruido")
+
+
+radar$tipo.n[radar$tipo=="avion"] <- 1
+radar$tipo.n[radar$tipo=="ruido" ]<- 0
+
+summary(radar)
+```
+
+Queremos que este modelo lineal funcione de manera que:
+
+$$ tipo.n = \beta_0 + \beta_1·distancia + \beta_2·potencia $$
+
+Entonces:
+
+-   si tipo.n \>= 0.5 es un avión
+
+-   si tipo.n \< 0.5 es ruido
+
+La recta que marcará el umbral será:
+
+$$ 0.5 = \beta_0+\beta_1·distancia+\beta_2·potencia $$
+
+Y reordenando un poco los términos, obtenemos:
+
+$$ potencia = \frac{0.5 - \beta_0}{\beta_2} + \frac{- \beta_1}{\beta_2}·distancia $$
+
+```{r}
+set.seed(1)
+set.seed(2)
+
+# fefinimos los dataframes para test y training. 
+itrain <- sample(1:nrow(radar),round(nrow(radar)*0.7))
+
+radar.train<- radar[itrain,]
+radar.test <- radar[-itrain,]
+
+# calculamos la regresión lineal. 
+modellm<-lm(data=radar.train,formula=tipo.n~distancia+potencia)
+beta<-modellm$coefficients
+
+ggplot(radar.train,aes(x=distancia,y=potencia,color=tipo))+geom_point(size=3)+
+ geom_abline(intercept = (0.5-beta[1])/beta[3],slope = -beta[2]/beta[3], color="red" )
+```
+
+### Regresión logística:
+
+El modelo lineal es muy limitado en este caso. Ya que los valores lógicos solo pueden tomar dos valores, 1 o 0, mientras que una línea se extiende mucho más allá.
+
+```{r}
+summary(radar.train)
+summary(radar.test)
+```
+
+```{r}
+model <- glm(data=radar.train, formula=tipo~distancia+potencia, family=binomial(link='logit'))
+
+betalg <- model$coefficients
+
+ggplot(radar.train,aes(x=distancia, y=potencia, color=tipo)) + 
+  geom_point(size=3) +
+  geom_abline(intercept = (0.5-beta[1])/beta[3],slope = -beta[2]/beta[3], color="red" )    +
+  geom_abline(intercept = -betalg[1]/betalg[3],slope = -betalg[2]/betalg[3], color="blue" )
+```
+
+```{r}
+out <- radar.test
+
+# añadimos una columna y con la predicción del modelo. 
+out$logodds <- predict(model,radar.test)
+
+ggplot(out, aes(x=logodds, color=tipo)) + 
+  geom_histogram(aes(fill=tipo)) + 
+  xlab("odds")
+```
+
+**ojo**: la salida del modelo es $\ln Odds$. No nos da la probabilidad directamente. Para obtener una probabilidad, debemos usar el sigmoide:
+
+```{r}
+out<-radar.test
+
+out["logodds"] <- predict(model, radar.test)
+out["probs"] <- 1/(1+exp(-out["logodds"]))
+
+#Así tendríamos una función de densidad de la probabilidad: 
+ggplot(out,aes(x=probs,color=tipo))+geom_density()
+```
+
+```{r}
+# también podemos obtener la probabilidad directamente si añadimos como parámetro "response" dentro de la función predict. 
+
+out["probs"] <- predict (model,radar.test, type="response")
+
+ggplot(out,aes(x=probs,color=tipo))+geom_density()
+```
+
+### Matriz de confusión:
+
+```{r}
+# inicializo una matriz de 2*2 con valores 0 (aunque no es necesario para usar table). 
+# la función rep repite un valor (0) el número indicado de veces (4)
+
+M <- matrix(rep(0,4),ncol = 2)
+```
+
+```{r}
+#guardamos la predicción del modelo en el vector radar_pred. 
+radar_pred <- predict(model, radar.test)
+
+#defino un valor umbral (que separa los valores sobre log(Odds)):
+umbral <- 2
+```
+
+```{r}
+#usando el umbral definido, convierto los valores del vector anterior (radar_pred) en un factor avion/ruido. 
+
+y_est = factor( ifelse(radar_pred < umbral, 0, 1), labels=c("ruido","avion"))
+
+```
+
+```{r}
+#ya puedo calcular la matriz de confusión:
+
+M = table(real=radar.test$tipo, predicho=y_est)
+```
+
+```{r}
+#pintamos los dos modelos)
+ggplot(radar.test,aes(x=distancia,y=potencia,color=tipo)) + 
+  geom_point(size=3) + 
+  geom_abline(intercept=(-betalg[1])/betalg[3], slope=-betalg[2]/betalg[3], color="blue", linetype="dashed") +
+  geom_abline(intercept = (umbral-betalg[1])/betalg[3],slope = -betalg[2]/betalg[3], color="blue" )
+```

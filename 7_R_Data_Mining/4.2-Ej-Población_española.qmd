@@ -1,0 +1,161 @@
+---
+title: "Análisis de la población española en 2022"
+format: html
+editor: visual
+---
+
+# Ejemplo: Análisis de la población española en 2022
+
+Qué vamos a aprender:
+
+**librería [dplyr](https://dplyr.tidyverse.org/):**
+
+-   select()
+-   rename()
+-   arrange()
+-   mutate()
+
+**librería [tidyr](https://tidyr.tidyverse.org/):**
+
+-   drop_na()
+-   pivot_wider()
+
+**librería [ggplot2](https://ggplot2.tidyverse.org/)**
+
+-   geom_cols()
+-   geom_hline() y geom_vline()
+-   scale_y\_continuous()
+
+Se han descargado los datos oficiales del Instituto Nacional de Estadística (http://www.ine.es), la población residente por fecha, sexo y edad a fecha del 1 de enero de 2022. El fichero [966b3c.csv](http://www.ine.es/jaxiT3/Tabla.htm?t=9663&L=0) se encuentra accesible desde el notebook.
+
+```{r}
+poblacion_raw<-read.csv("data/9663bsc.csv", skip=0, fileEncoding="ISO-8859-1", header=T, sep=';', stringsAsFactor=F)
+
+head(poblacion_raw,7)
+```
+
+### Limpieza y exploración de datos
+
+Tenemos que transformar los datos para tener un dataframe con 4 columnas:
+
+-   Total: Total de población que existe para una determinada edad (Mujeres+Hombres)
+-   Hombres: Total de hombres que existe para una determinada edad
+-   Mujeres: Total de mujeres que existe para una determinada edad
+-   edad: Edad en años de ese segmento de la población
+
+```{r}
+library(dplyr)
+library(tidyr)
+
+poblacion_raw |> 
+  #convertimos Total a valores numéricos, reemplazando los puntos por "". 
+  mutate(Total = as.numeric(gsub("\\.", "", Total))) |>
+  pivot_wider(names_from = Sexo, values_from = Total) |>
+  mutate(edad = as.numeric(gsub("año(s|)", "", Edad.simple))) |>
+  drop_na() |>
+  rename(Total = "Ambos sexos") |>
+  select(edad, Hombres, Mujeres, Total) -> poblacion
+
+head(poblacion)
+```
+
+### Estadísticos interesantes: 
+
+Total de la población española:
+
+```{r}
+paste("La población total de españa es de", sum(poblacion$Total),"habitantes.")
+
+# Usamos format para hacer un poco más legible el número: 
+paste("La población total de España es de", format( sum(poblacion$Total), big.mark='.', decimal.mark=','),"habitantes.")
+
+```
+
+Total por sexos:
+
+```{r}
+paste("En españa hay", 
+      format(sum(poblacion$Mujeres), big.mark=".", decimal.mark=','), "mujeres y ", 
+      format(sum(poblacion$Hombres), big.mark=".", decimal.mark=','), "hombres.")
+```
+
+Moda de la distribución por edades:
+
+```{r}
+paste("La moda, la edad más común, es de",
+      poblacion$edad[which.max(poblacion$Total)], "años", 
+      "en total", max(poblacion$Total), "tienen esa edad")
+```
+
+Media de edad (calculamos la media ponderada):
+
+```{r}
+paste("La media de edad de la población española es",
+      round(with(poblacion, sum(edad*Total)/sum(Total)), 2), "años.")
+```
+
+Porcentaje de personas mayores de 65 años.
+
+```{r}
+edad<-65
+pc_edad <- with(poblacion, sum(Total[edad >=65])/sum(Total))*100
+
+paste("El porcentaje de personas con una edad superor a ", edad, "años es del ", 
+      round(pc_edad, 2),"%")
+```
+
+Porcentaje de personas entre 18 y 65 años
+
+```{r}
+edad1<-18
+edad2<-65
+
+pc_edad <- with(poblacion, sum(Total[edad >= 18 & edad <=65])/sum(Total))*100
+
+
+paste0("El porcentaje de personas con una edad entre ", edad1," y ",edad2," años es del ",
+      round(pc_edad, 2),"%")
+```
+
+### Histograma de la población
+
+Vamos a pintar un histograma de la población por edades:
+
+```{r}
+library(ggplot2)
+poblacion |>
+  ggplot(aes(x=edad, y=Total)) +
+  geom_col()
+
+```
+
+Podemos reproducir la típica pirámide de población por género:
+
+```{r}
+poblacion |>
+  ggplot(aes(x=edad)) +
+  geom_col(aes(y=-Hombres), fill="blue") +
+  geom_col(aes(y=Mujeres), fill="red") +
+  scale_y_continuous(breaks=seq(-5e5, 5e5, 1e5), labels = format(abs(seq(-5e5, 5e5, 1e5)), big.mark = ".", decimal.mark = ",", scientific = F)) +
+  coord_flip() +
+  labs(title="Pirámide de población española", sutitle="Datos de 2022", x = "edad", y= "Hombres       Mujeres")
+  
+```
+
+Evolución del porcentaje de Hombres vs Mujeres en función de la edad
+
+```{r}
+poblacion |>
+  mutate(proporcion = (Hombres/Mujeres - 1) * 100 ) |>
+  mutate(mashombres = (proporcion > 0))  |>
+  ggplot(aes(x = edad, y = proporcion, color=mashombres))  +
+    geom_segment(aes(x = edad, y = 0, xend = edad, yend = proporcion)) +
+    geom_point() +
+    theme_bw()
+
+
+
+
+```
+
+Más información [aquí](https://www.ine.es/ss/Satellite?L=es_ES&c=INESeccion_C&cid=1259926722525&p=%5C&pagename=ProductosYServicios%2FPYSLayout)

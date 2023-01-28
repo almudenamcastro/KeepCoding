@@ -1,0 +1,241 @@
+---
+format: html
+editor: visual
+---
+
+# Introducción a R
+
+R es un lenguaje de programación orientado a la estadística. Algo parecido a SPSS o Matlab.
+
+Es código abierto y se entrega bajo licencia GPL (versión 2 o posterior). Además existen multitud de paquetes que complementan su funcionalidad.
+
+## Asignaciones
+
+Podemos usar \<- o el símbolo = para asignar un valor a una variable
+
+```{r}
+a <- 10
+b=2
+"texto variable" -> c
+```
+
+```{r}
+print(a)
+```
+
+Podemos usar paste para concatenar textos:
+
+```{r}
+paste("El valor de a es:",a)
+```
+
+## Operaciones
+
+### Operaciones matemáticas
+
+```{r}
+b+a #Suma
+b*a #Multiplicación
+b-a #Resta
+b/a #División: 
+a%/%b #División entera: 
+a %% b #Módulo: 
+a^b #Potencia: 
+```
+
+### Otro tipo de operadores
+
+```{r}
+3:10        #Secuencias
+6 %in% 3:10 #contiene
+```
+
+## Funciones básicas
+
+Las funciones \* siempre acaban en () \* pueden recibir un número variable de parámetros \* pueden existir parámetros por defecto
+
+Para ver las variables en memoria usamos ls():
+
+```{r}
+ls()
+```
+
+Para ver el tipo de variable, typeof(variable):
+
+```{r}
+typeof(a)
+```
+
+Para concatenar textos usamos paste(a, b, c, ...)
+
+```{r}
+paste("El valor de a es ",a)
+```
+
+## Tipos de datos
+
+### double (numérico)
+
+```{r}
+a <- 20
+typeof(a)
+```
+
+### character (texto)
+
+```{r}
+s1 <- " Discovery"
+s1
+typeof(s1)
+```
+
+### logical (booleano)
+
+```{r}
+b1 <- TRUE
+b2 <- T
+b3 <- FALSE
+paste("El valor de b1 es",b1)
+paste("El valor de b2 es",b2)
+paste("El valor de b3 es",b3)
+typeof(b1)
+```
+
+## Estructuras de datos
+
+Para obtener más información sobre la estrutura de una variable usamos str (de structure).
+
+### Vectores
+
+Los vectores se crean con la función c(), todos los elementos de un vector son del mimo tipo. Es decir, no se podrían mezclar caracteres y double.
+
+En Python se llaman listas:
+
+    a = [1,2,3,40]
+
+En Java arrays:
+
+       int[] a={1,2,3,40};
+
+**En R son vectores:**
+
+       a = c(1,2,3,40)
+
+Los vectores heredan el "tipo" de sus elementos:
+
+```{r}
+alturas<-c(1.80,1.60,1.50,1.90,1.75,1.63,1.65)
+print(paste("alturas es una variable de tipo:",typeof(alturas)))
+
+frutas<-c("fresa", "pera", "manzana")
+print(paste("frutas es una variable de tipo:",typeof(frutas)))
+
+trufas<-c(b1, b2, b3)
+print(paste("trufas es una variable de tipo:",typeof(trufas)))
+
+str(alturas)
+
+```
+
+Los elementos de un vector pueden tener un nombre. Sería parecido a un diccionario de Python, en ese sentido. Para modificar (o definir) esos nombres, podemos usar la función names. Para borrar los nombres, usaremos unname()
+
+```{r}
+names(alturas)
+
+names(alturas) <- c("a", "b", "c", "d", "e", "f", "g")
+alturas
+
+alturas <- unname(alturas)
+```
+
+#### Acceso a los elementos de un vector:
+
+Accedemos a los elementos de un vector mediante índices:
+
+```{r}
+print(paste("El valor del tercer elemento es:",alturas[3]))
+```
+
+**OJO: ¡En R los vectores empiezan en 1!**
+
+Podemos colapsar los elementos de un vector (en un string, por ejemplo) usando "collapse":
+
+```{r}
+paste(alturas[c(1,2,3)], collapse=', ')
+paste("Alturas del 1 al 3 es:", paste(alturas[c(1,2,3)], collapse=', '))
+```
+
+### Data Frames
+
+Un Dataframe es una tabla como la que podemos encontrar en cualquier hoja de calculo.
+
+![](pics/ejemplo_dataframe.png)
+
+La información se estructura en columnas, cada columna puede ser de un tipo de variable diferente: categorica, numérica, fecha, etc..
+
+Cada fila representa un elemento u objeto cuyos atributos están representados por las columnas.
+
+Para definir un dataframe, introducimos las sucesivas columnas con sus datos.
+
+```{r}
+df <- data.frame(Animal=c('Perro', 'Periquito', 'Gato', 'Caballo'),
+                 Cantidad=c(10,3,4,1),
+                 Peso=c(30, 0.01, 2, 500))
+```
+
+```{r}
+df
+```
+
+#### Acceso a los elementos de un dataframe:
+
+Podemos acceder a los datos por filas y por columnas:
+
+```{r}
+df[1,]
+df[,2]
+df[1,2]
+```
+
+Podemos acceder a las columnas por nombre (con \$, o cómo índice):
+
+```{r}
+df$Cantidad
+
+df[,'Cantidad']
+```
+
+#### Filtrar datos por una condición:
+
+Podemos filtrar mediante una máscara. Por ejemplo, si queremos buscar aquellos que pesan más de 20kg
+
+```{r}
+df[df$Peso>20,]
+```
+
+```{r}
+paste('Los animales que pesan más de 20kg son:', paste(df[df$Peso>20,'Animal'], collapse=','))
+```
+
+También podemos utilizar la función **which()** para hacer el filtrado \* wich devuelve directamente los índices de los elementos que son TRUE.
+
+```{r}
+a <- which(c(TRUE, FALSE, TRUE, FALSE))
+paste("la función devuelve los índices que son TRUE, en este caso", paste(a, collapse = " y ") )
+```
+
+En ocasiones es mejor usar wich por dos motivos:
+
+-   Funciona cuando hay NA: los NAs no funcionan con la desigualdad entre corchetes. Si hay un valor del peso NA, por ej., no es mayor ni menor que 20. Which devuelve una lista de índices y resuelve este problema.
+
+-   Es ligeramente más rápido que la desigualdad.
+
+```{r}
+df[which(df$Peso>20),]
+```
+
+**OJO**: si aplicamos una máscara que es más pequeña que el df, R no nos devuelve un error, sino que la aplica en bucle.
+
+```{r}
+paste('Los animales que pesan más de 20kg son:', paste(df[df$Peso>20,'Animal'], collapse=','))
+```

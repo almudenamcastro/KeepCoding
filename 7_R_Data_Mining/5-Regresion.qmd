@@ -1,0 +1,196 @@
+---
+format: html
+editor: visual
+---
+
+## Regresión lineal
+
+Queremos obtener una formula que nos diga cuál es la relación entre dos variables (por ejemplo, la altura del hijo en función de la altura del padre, ver hoja 5.1). Para ello, vamos a calcular lo que se llama una **regresión lineal**.
+
+En este caso, queremos obtener una fórmula que nos permite calcular la variable $y$ enfunción de la variable $x$. Algo como esto:
+
+$$
+y=\beta_0+\beta_1·x
+$$
+
+El objetivo es encontrar unos valores de $\beta_0$ y $\beta_1$ que minimicen el error que cometemos en la predicción.
+
+El error, también llamado **residuo**, es la diferencia entre la altura real del iésimo hijo y la altura predicha por nuestro modelo, nuestra ecuación:
+
+$$
+error_i = y_{i} - \hat{y_{i}} = y_{i} - (\beta_0+\beta_1·x_i)
+$$
+
+Buscaremos unos valores $\beta_0$ y $\beta_1$ tal que minimicen el el error cuadrático medio:
+
+$$
+MSE = {1 \over n} \sum _{i=0} ^n {(y_i-\hat{y_i})^2} = {1 \over n} \sum_{i=0} ^n{(y_i-(\beta_0+\beta_1·x_i))^2}
+$$
+
+En R, podemos calcularlo con la función *lm()*:
+
+```{r}
+set.seed(2)
+df_random <- data.frame(x = seq(1,100), 
+                 y = seq(1,100)*2 + rnorm(100, 0, 3))
+
+model <- lm(df_random, formula=y~x)
+summary(model)
+```
+
+Esto nos dice que la variable $y$ se calcula como:
+
+$$
+y = 0.70 + 1.98· x
+$$
+
+### Covarianza
+
+La covarianza es un valor que indica el grado de variación **lineal** conjunta de dos variables aleatorias respecto a sus medias.
+
+Supongamos que queremos comparar dos variables aleatorias X e Y: 
+* Tendremos alta covarianza (positiva) cuando, para valores altos de X, tengamos mayoritariamente valores altos de Y 
+* Tendremos baja covarianza (negativa) cuando, para valores altos de X, tengamos mayoritariamente valores bajos de Y 
+* Tendremos covarianza cercana a 0, para valores altos de X, los valores de Y pueden ser altos o bajos por igual
+
+Su formula es la siguiente:
+
+$$
+cov(X,Y) = \frac{1}{N} \sum _{i=1}^N \left( x_i-\bar{x} \right)\left( y_i-\bar{y} \right)
+$$
+
+Recordemos la formula de la varianza:
+
+$$
+Var(x) = \frac{1}{N} \sum _{i=1}^N \left( x_i-\bar{x} \right)^2
+$$
+
+La covarianza de una variable aleatoria consigo misma es igual a la varianza: 
+
+$$
+cov(X,X) = Var(X)
+$$
+
+En R la calculamos con la función *cov(x,y)*
+
+```{r}
+cov(df_cm)
+```
+
+### Correlación
+
+La correlación es un valor que indica el grado de variación conjunta y **lineal** de dos variables aleatorias. Es la covarianza normalizada en el rango $[-1,1]$. Es una forma de ignorar la variación de cada una de las variables en si y centrarse únicamente en la relación que existe entre ambas, ya que una covarianza alta puede venir dada también porque una de las variables a estudiar tenga una varianza elevada.
+
+Supongamos que queremos comparar dos variables aleatorias X e Y:
+
+-   Correlación cercana a 1, para valores altos de X, tengamos mayoritariamente valores altos de Y
+-   Correlación cercana a -1, para valores altos de X, tengamos mayoritariamente valores bajos de Y
+-   Correlación cercana a 0, para valores altos de X, los valores de Y pueden ser altos o bajos por igual
+
+La función de correlación de Pearson es: 
+
+$$
+\rho\_{X,Y} = corr (X,Y) = \frac{cov(X,Y)}{\sigma_X \sigma_Y}
+$$
+
+Al igual que con la covarianza podemos calcular una matriz de correlación. Se utiliza para ver de forma sencilla cual es la relación entre varias variables. En una matriz de correlación la diagonal será siempre 1 (la correlación de una variable consigo misma es 1) y el valor de la celda *ij* vendrá dado por la correlación de la variable i con j.
+
+En R la calculamos con la función *cor(x,y)*
+
+```{r}
+cor(df_cm)
+```
+
+## Coeficiente de determinación $R^2$
+
+Proporciona una medida de como de bien nuestra medida sigue al modelo. Se calcula mediante:
+
+$$
+R\^2=1-\frac{SS_{res}}{SS_{tot}}=1-\frac{MSE(y,y')}{VAR(y)}
+$$
+
+Donde $SS_{res}$ es la suma del cuadrado de los residuos:
+
+$$
+SS\_{res}=\sum\_i (y_i-y_i')\^2
+$$
+
+y $SS_{tot}$ es proporcional a la varianza de $Y$:
+
+$$
+SS\_{tot}=\sum\_i (y_i-\bar{y})\^2
+$$
+
+Cuanto más cercano a $1$ mejor seguirá la predicción a los datos reales.
+
+### Prediciendo la dureza del hormigón
+
+Resumen: El hormigón es el material más importante en la ingeniería civil. La resistencia a la compresión del hormigón es una función altamente no lineal de la edad y ingredientes Estos ingredientes incluyen cemento, escoria de alto horno, cenizas volantes, agua, superplastificante, agregado grueso y agregado fino.
+
+Fuente: https://archive.ics.uci.edu/ml/datasets/Concrete+Compressive+Strength
+
+**Características de los datos:**      La resistencia a la compresión real del hormigón (MPa) para una mezcla dada bajo un la edad específica (días) se determinó a partir del laboratorio. Los datos están en forma cruda (no a escala).
+
+**Resumen estadístico:**
+
+Número de instancias (observaciones): 1030 Cantidad de Atributos: 9 Desglose de atributos: 8 variables de entrada cuantitativas y 1 variable de salida cuantitativa Faltan valores de atributo: ninguno
+
+-   Cemento (componente 1) - cuantitativo - kg en una mezcla m3 - Variable de entrada
+-   Escoria de alto horno (componente 2) - cuantitativa - kg en una mezcla de m3 - Variable de entrada
+-   Cenizas volantes (componente 3) - cuantitativo - kg en una mezcla m3 - Variable de entrada
+-   Agua (componente 4) - cuantitativa - kg en una mezcla m3 - Variable de entrada
+-   Superplastificante (componente 5) - cuantitativo - kg en una mezcla m3 - Variable de entrada
+-   Agregado grueso (componente 6) - cuantitativo - kg en una mezcla m3 - Variable de entrada
+-   Agregado fino (componente 7) - cuantitativo - kg en una mezcla m3 - Variable de entrada
+-   Edad - cuantitativa - Día (1 \~ 365) - Variable de entrada
+-   Resistencia a la compresión del hormigón - cuantitativa - MPa - Variable de salida
+
+Cargamos los datos y observamos sus valores
+
+```{r}
+concrete<-read.csv("data/Concrete_Data.csv",
+                   col.names=c("cemento","escoria","cenizas","agua","plastificante","aggrueso","agfino","edad","resistencia"))
+summary(concrete)
+```
+
+```{r}
+
+```
+
+Separamos los datos en train y test
+
+```{r}
+
+```
+
+Creamos el modelo
+
+```{r}
+
+
+```
+
+Calculamos sus figuras de calidad, tanto en training como en testing:
+
+```{r}
+
+
+```
+
+```{r}
+
+```
+
+Aquí vemos que tenemos un R² no tan bueno, veamos el residuo:
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+Se ve como a medida que aumenta la resistencia también lo hace el error del modelo. Este modelo no es especialmente bueno, pero podría ser útil si es rentable económicamente.
+
+**Importante** : Todos los modelos son erróneos, pero algunos son útiles. https://en.wikipedia.org/wiki/All_models_are_wrong

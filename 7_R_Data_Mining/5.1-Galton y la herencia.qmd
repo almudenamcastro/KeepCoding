@@ -1,0 +1,136 @@
+---
+title: "5.1 Galton y la herencia genética"
+format: html
+editor: visual
+---
+
+## Galton y la herencia genética:
+
+Dataset de: https://myweb.uiowa.edu/pbreheny/data/pearson.html Copiar: https://cs.brown.edu/courses/cs100/lectures/lecture15c.pdf
+
+```{r}
+library(tidyverse)
+```
+
+Vamos a cargar un dataset que tiene la altura de los padres y sus hijos. Son datos utilizados orignalmente por Francis Galton.
+
+```{r}
+df=read.table('data/father_son.txt', header=TRUE)
+head(df)
+summary(df)
+```
+
+Los datos están en pulgadas, así que los pasaremos a centímetros para endenderlo mejor.
+
+```{r}
+df_cm <- df |> mutate (Father=Father*2.54, Son=Son*2.54)
+```
+
+A continuación vamos a dibujar el histograma de la altura de padres e hijos, junto con un boxplot:
+
+```{r}
+g1 <- ggplot(df_cm, aes(x=Father))+
+  geom_histogram(bins=20, color='blue', fill='dark blue') +
+  geom_boxplot(width=20, color='red') + 
+  ggtitle("Altura padres") +
+  xlim(c(140,200))
+ 
+g2 <- ggplot(df_cm, aes(x=Son)) +
+  geom_histogram(bins=20, color='blue', fill='dark blue') +
+  geom_boxplot(width=20, color='red') + 
+  ggtitle("Altura hijos") +
+  xlim(c(140,200))
+
+gridExtra::grid.arrange(g1, g2, ncol=2)  
+
+```
+
+### Regresión lineal:
+
+La distribución de altura de los hijos y los padres es muy parecida. Vamos a ver como se relacionan entre sí, calculando una regresión lineal. En R, podemos calcularlo con la función *lm()*:
+
+```{r}
+model <- lm(df_galton_cm, formula=Son~Father)
+summary(model)
+```
+
+Esto nos dice que la altura del hijo es:
+
+$$
+hijo\_{altura} = 86.072 + 0.514·padre\_{altura}\
+$$
+
+La altura estimada de un hijo cuyo padre mide 155cm es:
+
+$$
+hijo\_{altura}= 86.072+0.514·155=165cm
+$$
+
+La altura estimada de un hijo cuyo padre mide 185cm es:
+
+$$
+hijo_{altura}=86.072+0.514·185=181 [cm]
+$$
+
+### Regresión a la media
+
+La siguiente gráfica nos dice que los padres altos tienen hijos altos y que los padres bajos tienen hijos bajos.
+
+```{r}
+ggplot(df_cm, aes(x=Father, y=Son))+geom_point(color='blue')+
+  geom_smooth(method='lm', formula = y~x, color='red')+
+  xlab('Padre')+ylab('Hijo')+
+  ggtitle("Relación de alturas entre padres e hijos")
+```
+
+Vamos a calcular la altura estimada de un hijo para diferentes alturas de un padre: 150,155,160,180,185 y 190
+
+```{r}
+
+```
+
+Los **padres altos** tienen hijos altos, pero de media serán **más bajos que sus padres**.
+
+Los **padres bajos** tienen hijos bajos, pero de media serán **más altos que sus padres**.
+
+Se produce lo que se llama una **regresión a la media**, es decir, la altura del hijo está relacionada con la altura del padre pero tenderá hacia la media.
+
+Vamos a calcular la altura media de los hijos cuyos padres son **altos**, miden más de 180cm. Como veremos, la altura media de los hijos será **inferior** a la de sus padres.
+
+```{r}
+
+```
+
+Vamos a calcular la altura media de los hijos cuyos padres son **bajos**, miden menos de 170cm. Como veremos, la altura media de los hijos será **superior** a la de sus padres.
+
+```{r}
+
+```
+
+Vamos a dibujar el histograma por separado de los padres altos y bajos junto con sus hijos.
+
+```{r}
+bajos <- df_cm |> filter(Father < 170) |>
+  pivot_longer(c(Father,Son), names_to = "sujeto", values_to= "altura") |>
+  ggplot(aes(x=altura, color=sujeto)) + 
+  geom_histogram(binwidth = 1, aes(fill=sujeto), alpha=0.2) +
+  geom_boxplot(aes(y=-10), width =10) +
+  theme_bw() +
+  ggtitle("Padres de altura < 170 cm")
+```
+
+También podemos calcular lo que se conoce como covarianza y correlación.
+
+```{r}
+altos <- df_cm |> filter(Father > 180) |>
+  pivot_longer(c(Father,Son), names_to = "sujeto", values_to= "altura") |>
+  ggplot(aes(x=altura, color=sujeto)) + 
+  geom_histogram(binwidth = 1, aes(fill=sujeto), alpha=0.2) +
+  geom_boxplot(aes(y=-10), width =10) +
+  theme_bw() +
+  ggtitle("Padres de altura > 180 cm")
+
+gridExtra::grid.arrange(bajos, altos, ncol=2)
+```
+
+------------------------------------------------------------------------
