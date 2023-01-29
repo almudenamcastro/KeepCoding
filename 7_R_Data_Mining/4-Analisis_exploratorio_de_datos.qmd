@@ -25,7 +25,7 @@ Así X \|\> fun1() \|\> fun2() es equivalente a fun2(fun1(X))
 
 Para consultar la documentación una función en detalle, podemos usar ?función.
 
--   **seq(start, end, leap)**: genera un vector con una secuencia de números. En los dos primeros parámetros le pasamos el inicio y el final de la secuencia. El tercer parámetro puede indicar un salto o la longitud del vector de salida.
+-   **seq(**start, end, leap**)**: genera un vector con una secuencia de números. En los dos primeros parámetros le pasamos el inicio y el final de la secuencia. El tercer parámetro puede indicar un salto o la longitud del vector de salida.
 
 ```{r}
 seq(1,5)
@@ -42,3 +42,9 @@ seq(1,5, length.out=7)
 -   **deplyr**: con funciones para agrupar datos como group_by y summarize.
 -   **ggplot**: para representar los datos gráficamente.
 -   **tidyverse**: descarga varias librerías asociadas a su tidiverso.
+
+### Para evaluar funciones: 
+
+-   **system.time**(funcion(df)): Podemos averiguar cuánto tarda una función en ejecutarse mediante system.time
+
+-   **microbenchmark**::microbenchmark(func1(df), func2(df)): compara los tiempos de ejecución y recursos consumidos por función 1 y función 2.
