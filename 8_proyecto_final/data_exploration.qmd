@@ -212,53 +212,62 @@ airbnb_cols <- cols(airbnb_clean)
 
 ## What could we learn?
 
-Let's look into the columns and see what we could learn from them. We can then remove columns that are probably not too relevant for our analysis. 
-#### Basic data: 
-- ID, Host.ID: The IDs will help us tell houses and hosts apart 
-- Latitude, Longitude, Street, Neighbourhood.Cleansed, Neighbourhood.Group.Cleansed, Zipcode -> relevant to represent the data. 
+Let's look into the columns and see what we could learn from them. We can then remove columns that are probably not too relevant for our analysis.
 
-#### Key metrics**:
-- Price, Weekly.Price, Monthly.Price, Security.Deposit, Cleaning.Fee: these are values we could try to predict. But all of them have lots of empty values except for "Price". 
-- Availability.30, Availability.60, Availability.90, Availability.365, Calendar.Updated?: could be interesting -> low availability is indicative of high demand. 
+#### Basic data:
 
+-   ID, Host.ID: The IDs will help us tell houses and hosts apart - Latitude, Longitude, Street, Neighbourhood.Cleansed, Neighbourhood.Group.Cleansed, Zipcode -\> relevant to represent the data.
 
-#### Possible data stories: 
+#### Key metrics:
 
-* **Do words increase your airbnb price?**: Name (char), Summary, Space, Description, Neighborhood.Overview, Notes, Transit, Access, Interaction, House.Rules. These are all char fields. They could allow us to compare some liguistic features with the house price or availability. For instance: are houses described in English more expensive than those that have Spanish names? 
+-   **Price**, Weekly.Price, Monthly.Price, Security.Deposit, Cleaning.Fee: these are values we could try to predict. But all of them have lots of empty values except for "Price".
+-   **Availability**.30, Availability.60, Availability.90, Availability.365, Calendar.Updated?: could be interesting -\> low availability is indicative of high demand.
 
-* **Does gender affect pricing in airbnb?**:  Host.Name: gender analysis. are male hosts setting prices higher than female hosts or viceversa? Do their houses have higher demand? 
+#### Possible data stories:
 
-* **The key to success as an airbnb host**: Host.Since, Host.Location, Host.About, Host.Response.Time, Host.Response.Rate, Host.Listings.Count, Host.Verifications, Features. We could look for the host characteristics and behaviours that drive higher demand. Are more experienced hosts setting prices higher than new-comers or viceversa? Having a description is relevant for the price? 
+-   **Do words increase your airbnb price?** Name (char), Summary, Space, Description, Neighborhood.Overview, Notes, Transit, Access, Interaction, House.Rules. These are all char fields. They could allow us to compare some linguistic features with the house price or availability. For instance: are houses described in English more expensive than those described in Spanish? Do lengthy descriptions correlate with higher prices...
 
-* **The most wanted in airbnb**: Property.Type, Room.Type, Bed.Type, Bathrooms, Bedrooms, Beds, Accommodates, Amenities, Guests.Included, Extra.People, Minimum.Nights, Maximum.Nights, Cancellation.Policy, Features. We can look for the property characteristics that drive high demand and/or higher price. 
+-   **Does gender affect pricing in airbnb?** Host.Name: gender analysis. are male hosts setting prices higher than female hosts or viceversa? Do their houses have higher demand?
 
-* **The value of social proof**: Number.of.Reviews, First.Review, Last.Review, Review.Scores.Rating, Review.Scores.Accuracy, Review.Scores.Cleanliness, Review.Scores.Checkin, Review.Scores.Communication, Review.Scores.Location, Review.Scores.Value, Reviews.per.Month.
+-   **The key to success as an airbnb Host**: Host.Since, Host.Location, Host.About, Host.Response.Time, Host.Response.Rate, Host.Listings.Count, Host.Verifications, Features. We could look for the host characteristics and behaviours that drive higher demand. Are more experienced hosts setting prices higher than new-comers or viceversa? Having a description is relevant for the price?
 
-### Columns we should probably transform: 
-- Amenities: is is a variable list of categorical features. We could turn each one into a new column with T/F values. 
-- Features: is is a variable list of categorical features. We could turn each one into a new column with T/F values. 
-- Calendar.updated: turn it into days_since last update to make it quantitative. 
+-   **The most wanted in airbnb**: Property.Type, Room.Type, Bed.Type, Bathrooms, Bedrooms, Beds, Accommodates, Amenities, Guests.Included, Extra.People, Minimum.Nights, Maximum.Nights, Cancellation.Policy, Features. We can look for the property characteristics that drive high demand and/or higher price.
 
-#### Columns that we could remove: 
+-   **The value of social proof**: Number.of.Reviews, First.Review, Last.Review, Review.Scores.Rating, Review.Scores.Accuracy, Review.Scores.Cleanliness, Review.Scores.Checkin, Review.Scores.Communication, Review.Scores.Location, Review.Scores.Value, Reviews.per.Month.
 
-+ Scrape.ID, Last.Scraped, City, State, Country, Country.Code: not too relevant, all houses share the same value 
-+ Experiences.Offered, Host.Acceptance.Rate, Jurisdiction.Names, Has.Availability: all values are "none". 
-+ Calendar.last.Scraped: there are only 2 different dates, separated by a day (the date is the same as the Last.Scraped date)
+### Columns we should probably transform:
 
-+ Listing.Url: probably redundant with the house ID 
-+ Host.Url: probably redundant with the host ID
-+ Thumbnail.Url, Medium.Url, Picture.Url, XL.Picture.Url, Host.Thumbnail.Url, Host.Picture.Url: we won't be doing image analysis this time. 
+-   Amenities: is is a variable list of categorical features. We could turn each one into a new column with T/F values.
+-   Features: is is a variable list of categorical features. We could turn each one into a new column with T/F values.
+-   Calendar.updated: turn it into days_since last update to make it quantitative.
 
-+ Host.Total.Listings.Count, Calculated.host.listings.count: caculated is very similar to Host.Listings.Count (only inferior in 12% of the cases). Total is identical.
-+ Host.Neighbourhood: similar to Host.Location. 
-+ Market, Smart.Location: seem a bit redundant with other location data. 
+#### Columns that we could remove:
 
-+ Square.Feet: this is an interesting value to predict price. But it is mostly empty. 
-+ License: mostly empty
-- Geolocation: redundant with longitud + latitude.
+-   Scrape.ID, Last.Scraped, City, State, Country, Country.Code: not too relevant, all houses share the same value
 
+-   Experiences.Offered, Host.Acceptance.Rate, Jurisdiction.Names, Has.Availability: all values are "none".
 
-```{r} 
+-   Calendar.last.Scraped: there are only 2 different dates, separated by a day (the date is the same as the Last.Scraped date)
+
+-   Listing.Url: probably redundant with the house ID
+
+-   Host.Url: probably redundant with the host ID
+
+-   Thumbnail.Url, Medium.Url, Picture.Url, XL.Picture.Url, Host.Thumbnail.Url, Host.Picture.Url: we won't be doing image analysis this time.
+
+-   Host.Total.Listings.Count, Calculated.host.listings.count: caculated is very similar to Host.Listings.Count (only inferior in 12% of the cases). Total is identical.
+
+-   Host.Neighbourhood: similar to Host.Location.
+
+-   Market, Smart.Location: seem a bit redundant with other location data.
+
+-   Square.Feet: this is an interesting value to predict price. But it is mostly empty.
+
+-   License: mostly empty
+
+-   Geolocation: redundant with longitud + latitude.
+
+```{r}
 airbnb_sel <- airbnb_clean
 
 for (i in 1:nrow(airbnb_cols)){
