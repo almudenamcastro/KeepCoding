@@ -20,6 +20,20 @@ library(ggplot2)
  summary(airbnb)
 ```
 
+#### Date columns: 
+
+Let's assign the correct class to each column. We use as.Date to interpret the date columns:
+
+```{r}
+fechas <- c("Last.Scraped", "Calendar.last.Scraped","First.Review","Last.Review", "Host.Since")
+
+#convert date columns: 
+for (element in fechas){
+  airbnb_clean[[element]] <- as.Date(airbnb_clean[[element]])
+}
+```
+
+#### Cols empty / repeated values
 We are going to create a function that tells us how many repeated values are there in each column of the dataframe. This will help us assess the quality of the data:
 
 ```{r}
@@ -187,7 +201,7 @@ unique(airbnb_clean$Zipcode)
 Some streets are in English, others in Spanish... we already have the zip code in a different field. And all the data belongs to Madrid. Let's align these fields and isolate the Street name. 
 
 ```{r}
-sort(unique(airbnb_clean$Street))
+#sort(unique(airbnb_clean$Street))
 ```
 
 ```{r}
@@ -226,21 +240,6 @@ airbnb_clean <-airbnb_clean |>
 
 This has added more than 50 logical columns to our dataframe. Most are almost empty and therefore, not very useful, but we will remove them in time. 
 
-## Assign data classes:
-
-#### Date columns: 
-
-Let's assign the correct class to each column. We use as.Date to interpret the date columns:
-
-```{r}
-fechas <- c("Last.Scraped", "Calendar.last.Scraped","First.Review","Last.Review", "Host.Since")
-
-#convert date columns: 
-for (element in fechas){
-  airbnb_clean[[element]] <- as.Date(airbnb_clean[[element]])
-}
-```
-
 #### Factors: 
 Now, we want to identify what character columns could be interpreted as factors (categorical qualitative variables). Let's take a look again at the columns summary. 
 ```{r}
@@ -259,7 +258,11 @@ for (i in 1:nrow(airbnb_cols)){
   }
 }
 ```
+## Empty price 
 
+```{r}
+detail <- airbnb_clean[is.na(airbnb_clean$Price),]
+```
 
 ## Data entities:
 
@@ -286,7 +289,7 @@ hosts_cols <- cols(hosts)
 
 ```
 
-There are 8187 unique Hosts. Some of them offer multiple houses in Madrid.
+There are 8173 unique Hosts. Some of them offer multiple houses in Madrid.
 
 
 
@@ -323,25 +326,25 @@ airbnb_cols <- cols(airbnb_clean)
 - Features/amenities: There are many interesting features in these fields. But some of them are only included in less than 10% of the listings. We believe these might be less relevant for our analysis. 
 
 ```{r}
+airbnb_clean <- airbnb_clean
+
 for (i in 1:nrow(airbnb_cols)){
-  if (airbnb_cols$unique_values[i] < 3 | airbnb_cols$empty[i] > 11987){
+  #eliminamos columnas con un único valor
+  if (airbnb_cols$unique_values[i] < 2 | airbnb_cols$empty[i] > 11987){
     nombre <- airbnb_cols$column[i]
-    airbnb_clean <- airbnb_clean |> 
-      select(-nombre)
+    airbnb_clean[[nombre]]<-NULL
   }
 }
 airbnb_clean <- airbnb_clean |>
   select(-contains("Url")) |>
   select(-contains("translation missing")) |>
-  select(-Host.Neighbourhood, -Host.Total.Listings.Count, -Calculated.host.listings.count, -Geolocation, -Market, -Smart.Location)
+  select(-Host.Neighbourhood, -Host.Total.Listings.Count, -Calculated.host.listings.count, -Geolocation, -Market, -Smart.Location, -Calendar.last.Scraped)
 
 ```
 
 ```{r}
 airbnb_cols <- cols(airbnb_clean)
 ```
-
-
 
 ## What could we learn?
 
@@ -373,10 +376,3 @@ For a detailed description of each data column we can access the [Data Dictionar
 -   **Do perks increase your airbnb price?** Beyond location and price. Are there other perks and characteristics that impact price the most?
 
 -   **The value of social proof**: Number.of.Reviews, First.Review, Last.Review, Review.Scores.Rating, Review.Scores.Accuracy, Review.Scores.Cleanliness, Review.Scores.Checkin, Review.Scores.Communication, Review.Scores.Location, Review.Scores.Value, Reviews.per.Month. How much do these values impact price (once other variables have been accounted for).
-
-#### Columns we should probably transform:
-
--   **Amenities**: is is a variable list of categorical features. We could turn each one into a new column with T/F values.
--   **Features**: is is a variable list of categorical features. We could turn each one into a new column with T/F values.
--   **Calendar.updated**: turn it into days_since last update to make it quantitative. (Although this metric might not be needed)
-
