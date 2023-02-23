@@ -1,0 +1,54 @@
+---
+title: "What words increase your airbnb price?"
+format: html
+editor: visual
+---
+
+# What words increase your airbnb price?
+
+## Read data
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(data.table)
+
+source("functions.R")
+
+airbnb_clean <- fread("aribnb_clean.csv")
+summary(airbnb_clean) 
+```
+
+## Select columns
+
+```{r}
+airbnb_words <- airbnb_clean |>
+  select(1:11, Host.About, Price, Neighbourhood.Cleansed, Accommodates, Number.of.Reviews, Review.Scores.Rating)
+
+aribnb_words_cols <- cols(airbnb_words)
+```
+
+## Quantitative
+
+```{r}
+airbnb_words <- airbnb_words |>
+  mutate(Description.len = nchar(Description)) |>
+  mutate(Summary.len = nchar(Summary))
+```
+
+```{r}
+for (i in c(4, 6:12)){
+  airbnb_words[[i]] <- nchar(airbnb_words[[i]])> 1
+}
+```
+
+```{r}
+airbnb_words$test <- nchar(airbnb_words[,6] > 1)
+
+
+airbnb_words[[19]] <- nchar(airbnb_words[[6]])> 1
+
+detail <- airbnb_words |>
+  select(6,19)
+
+```

@@ -21,6 +21,7 @@ summary(airbnb)
 ```
 
 #### Cols empty / repeated values
+
 We are going to create a function that tells us how many repeated values are there in each column of the dataframe. This will help us assess the quality of the data:
 
 ```{r}
@@ -58,9 +59,9 @@ cols <- function(df){
 airbnb_cols <- cols(airbnb)
 ```
 
-We can check that all the listings are uniquely identified by their ID and Geolocation data. 
+We can check that all the listings are uniquely identified by their ID and Geolocation data.
 
-#### Date columns: 
+#### Date columns:
 
 Let's assign the correct class to each column. We use as.Date to interpret the date columns:
 
@@ -117,23 +118,21 @@ airbnb_clean <- airbnb_clean |>
   filter (Longitude > -3.9 & Longitude < -3.5 & Latitude > 40.3 & Latitude < 40.6 )
 ```
 
-#### Country, State, City... 
-Once we have cleared out the data points outside Madrid's area, it is  weird that there are multiple values for Country, Country.Code, State and City. For instance, if we check the listings with a country different to Spain:
+#### Country, State, City...
+
+Once we have cleared out the data points outside Madrid's area, it is weird that there are multiple values for Country, Country.Code, State and City. For instance, if we check the listings with a country different to Spain:
 
 ```{r}
 detail <- airbnb_clean[airbnb_clean$Country!="Spain", ]
 ```
 
-We can check that most of the information about the apartment in "Cuba" talks about La Habana. The geolocation might be wrong, so we cant probably trust this data point. 
-The listing from Italy seems to be an italian girl looking for an apartment.  
+We can check that most of the information about the apartment in "Cuba" talks about La Habana. The geolocation might be wrong, so we cant probably trust this data point. The listing from Italy seems to be an italian girl looking for an apartment.
 
-````{r}
-detail <- airbnb_clean |>
-  filter(!(grepl("Madrid|马德里|馬德里自治區", City, ignore.case = TRUE) | grepl("28...", Zipcode)))
+```{r} 
+detail <- airbnb_clean |>   filter(!(grepl("Madrid|马德里|馬德里自治區", City, ignore.case = TRUE) | grepl("28...", Zipcode)))
 ```
 
-Something similar happens if we check the apartments that don't mention Madrid as the State, and have a Zipcode that doesn't start with 28. Some apartments have addresses located in Barcelona, Malaga or Valencia, 4 of them don't have any information about their city, Street State or Zipcode. These could be mistakes in the Geolocation data. They only add up to 11 data points, so we can safely remove them. 
-
+Something similar happens if we check the apartments that don't mention Madrid as the State, and have a Zipcode that doesn't start with 28. Some apartments have addresses located in Barcelona, Malaga or Valencia, 4 of them don't have any information about their city, Street State or Zipcode. These could be mistakes in the Geolocation data. They only add up to 11 data points, so we can safely remove them.
 
 ```{r}
 airbnb_clean <- airbnb_clean |>
@@ -147,7 +146,7 @@ airbnb_clean <- airbnb_clean |>
   filter (Neighbourhood.Cleansed!="El Pardo" & City!="San Fernando de Henares" & City != "Boadilla del Monte" & Zipcode != "28224")
 ```
 
-Now we can standardize these columns and take another look at the columns summary: 
+Now we can standardize these columns and take another look at the columns summary:
 
 ```{r}
 airbnb_clean$City <- "Madrid"
@@ -156,7 +155,7 @@ airbnb_clean$State <- "Comunidad de Madrid"
 airbnb_cols <- cols(airbnb_clean)
 ```
 
-####Neighbourhood
+####Neighbourhood 
 There seems to be a difference between Neighbourhood and Neighbouhood.Cleansed. Let's visualize that:
 
 ```{r}
@@ -184,7 +183,8 @@ airbnb_clean <- airbnb_clean |>
 ```
 
 #### Empty price:
-Since price is one of the key metrics we will try to predict, we can't possibly use the apartments that don't have this value (these are only 9 data points).  
+
+Since price is one of the key metrics we will try to predict, we can't possibly use the apartments that don't have this value (these are only 9 data points).
 
 ```{r}
 detail <- airbnb_clean[is.na(airbnb_clean$Price),]
@@ -195,10 +195,12 @@ airbnb_clean <- airbnb_clean |>
 
 ## Text processing
 
-We want to clean some of the character fields and transform the lists into separated columns: 
+We want to clean some of the character fields and transform the lists into separated columns:
 
-#### ZipCode: 
-Let's edit and remove incorrect Zipcodes. 
+#### ZipCode:
+
+Let's edit and remove incorrect Zipcodes.
+
 ```{r}
 #unique(airbnb_clean$Zipcode)
 
@@ -209,8 +211,10 @@ airbnb_clean <- airbnb_clean |>
 
 unique(airbnb_clean$Zipcode)
 ```
-#### Street: 
-Some streets are in English, others in Spanish... we already have the zip code in a different field. And all the data belongs to Madrid. Let's align these fields and isolate the Street name. 
+
+#### Street:
+
+Some streets are in English, others in Spanish... we already have the zip code in a different field. And all the data belongs to Madrid. Let's align these fields and isolate the Street name.
 
 ```{r}
 #sort(unique(airbnb_clean$Street))
@@ -225,8 +229,9 @@ airbnb_clean <- airbnb_clean |>
 sort(unique(airbnb_clean$Street))
 ```
 
-#### Ammenities, Features. 
-These columns contain a string that summarizes different properties of the house or the host. We want to turn each property into a different column with a boolean value (T/F). Let's create a function (split_column) that does that: 
+#### Ammenities, Features.
+
+These columns contain a string that summarizes different properties of the house or the host. We want to turn each property into a different column with a boolean value (T/F). Let's create a function (split_column) that does that:
 
 ```{r}
 split_column <- function(df, column){
@@ -250,10 +255,12 @@ airbnb_clean <-airbnb_clean |>
   select(-Amenities, -Features)
 ```
 
-This has added more than 50 logical columns to our dataframe. Most are almost empty and therefore, not very useful, but we will remove them in time. 
+This has added more than 50 logical columns to our dataframe. Most are almost empty and therefore, not very useful, but we will remove them in time.
 
-#### Factors: 
-Now, we want to identify what character columns could be interpreted as factors (categorical qualitative variables). Let's take a look again at the columns summary. 
+#### Factors:
+
+Now, we want to identify what character columns could be interpreted as factors (categorical qualitative variables). Let's take a look again at the columns summary.
+
 ```{r}
 airbnb_cols <- cols(airbnb_clean)
 airbnb_cols[order(airbnb_cols$repeated, decreasing=TRUE), ]
@@ -270,7 +277,6 @@ for (i in 1:nrow(airbnb_cols)){
   }
 }
 ```
-
 
 ## Columns that we could remove:
 
@@ -302,7 +308,7 @@ airbnb_cols <- cols(airbnb_clean)
 
 -   Geolocation: redundant with longitud + latitude.
 
-- Features/amenities: There are many interesting features in these fields. But some of them are only included in less than 10% of the listings. We believe these might be less relevant for our analysis. 
+-   Features/amenities: There are many interesting features in these fields. But some of them are only included in less than 10% of the listings. We believe these might be less relevant for our analysis.
 
 ```{r}
 airbnb_clean <- airbnb_clean
@@ -324,7 +330,7 @@ airbnb_clean <- airbnb_clean |>
 ```{r}
 airbnb_cols <- cols(airbnb_clean)
 
-write.csv(airbnb_clean, "aribnb_clean.csv")
+write.csv2(airbnb_clean, "airbnb_clean.csv", row.names = FALSE)
 ```
 
 ## Data entities:
@@ -340,7 +346,7 @@ hosts <- airbnb_clean |>
 
 hosts_cols <- cols(hosts)
 
-write_csv(hosts, "hosts.csv")
+write.csv2(hosts, "hosts.csv", row.names = FALSE)
 
 ```
 
