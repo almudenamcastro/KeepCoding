@@ -8,4 +8,3 @@ This is where I keep the materials of my KeepCoding BigData course.
 - 2 Git. Learn how git works.
 
 The course was completed in March 2023.
-The final project was completed in February. 
